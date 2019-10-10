@@ -19,9 +19,49 @@ typedef struct {
     size_t decimal_digits;
     bool negative : 1;
     bool zero : 1;
+    bool even : 1;
 } BCD_int;
 
+typedef struct {
+    BCD_int div;
+    BCD_int mod;
+} BCD_int_divmod_pair;
+
+// destructor
 void free_BCD_int(BCD_int x);
+
+// constructors
+BCD_int new_BCD_int(uintmax_t a, bool negative);
+BCD_int copy_BCD_int(BCD_int a);
+BCD_int BCD_from_bytes(const unsigned char *str, size_t chars, bool negative, bool little_endian);
+BCD_int BCD_from_ascii(const char *str, size_t digits, bool negative);
+
+// operators
+signed char cmp_bcd(BCD_int x, BCD_int y);
+BCD_int add_bcd(BCD_int x, BCD_int y);
+BCD_int sub_bcd(BCD_int x, BCD_int y);
+BCD_int mul_bcd(BCD_int x, BCD_int y);
+// TODO:
+// BCD_int div_bcd(BCD_int x, BCD_int y);
+// BCD_int mod_bcd(BCD_int x, BCD_int y);
+// BCD_int_divmod_pair divmod_bcd(BCD_int x, BCD_int y);
+BCD_int pow_bcd(BCD_int x, BCD_int y);
+BCD_int factorial_bcd(BCD_int x);
+
+// operators with C integers
+BCD_int mul_bcd_cuint(BCD_int x, uintmax_t y);
+BCD_int mul_bcd_pow_10(BCD_int x, uintmax_t tens);
+BCD_int shift_bcd_left(BCD_int a, uintmax_t tens);
+BCD_int div_bcd_pow_10(BCD_int x, uintmax_t tens);  // not yet supported for odd tens
+BCD_int shift_bcd_right(BCD_int a, uintmax_t tens);  // not yet supported for odd tens
+BCD_int pow_cuint_cuint(uintmax_t x, uintmax_t y);
+
+// utility methods
+void print_bcd(BCD_int x);
+void print_bcd_ln(BCD_int x);
+unsigned short mul_dig_pair(packed_BCD_pair ab, packed_BCD_pair cd);
+
+
 inline void free_BCD_int(BCD_int x) {
     free(x.digits);
     x.digits = NULL;
@@ -39,6 +79,7 @@ BCD_int new_BCD_int(uintmax_t a, bool negative)   {
     c.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * c.bcd_digits);
     c.negative = negative;
     c.zero = !a;
+    c.even = !(a % 2);
     for (size_t i = 0; i < c.bcd_digits; i++)   {
         c.digits[i] = (((a % 100) / 10) << 4) | (a % 10);
         a /= 100;
@@ -46,7 +87,6 @@ BCD_int new_BCD_int(uintmax_t a, bool negative)   {
     return c;
 }
 
-BCD_int copy_BCD_int(BCD_int a);
 inline BCD_int copy_BCD_int(BCD_int a)  {
     BCD_int b = a;
     b.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * b.bcd_digits);
@@ -58,7 +98,7 @@ BCD_int BCD_from_bytes(const unsigned char *str, size_t chars, bool negative, bo
     // converts a bytestring to a little-endian BCD int
     BCD_int c;
     if (!chars || str == NULL)  {
-        c.zero = true;
+        c.zero = c.even = true;
         c.bcd_digits = c.decimal_digits = c.negative = 0;
         c.digits = NULL;
         return c;
@@ -91,15 +131,15 @@ BCD_int BCD_from_bytes(const unsigned char *str, size_t chars, bool negative, bo
         }
     }
     if (unlikely(i == -1))  {
-        c.zero = true;
+        c.zero = c.even = true;
         c.bcd_digits = c.decimal_digits = c.negative = 0;
         free(c.digits);
         c.digits = NULL;
     }
+    c.even = !(c.digits[0] % 2);
     return c;
 }
 
-BCD_int BCD_from_ascii(const char *str, size_t digits, bool negative);
 inline BCD_int BCD_from_ascii(const char *str, size_t digits, bool negative)    {
     // packs an ASCII digit string into big-endian bytes, then runs through BCD_from_bytes()
     size_t length = (digits + 1) / 2, i, j;
@@ -115,8 +155,6 @@ inline BCD_int BCD_from_ascii(const char *str, size_t digits, bool negative)    
     free(bytes);
     return ret;
 }
-
-BCD_int sub_bcd(BCD_int x, BCD_int y);
 
 BCD_int add_bcd(BCD_int x, BCD_int y)   {
     // performing this on two n-digit numbers will take O(n) time
@@ -221,6 +259,7 @@ BCD_int add_bcd(BCD_int x, BCD_int y)   {
     else    {
         z.decimal_digits = max_digits * 2 - 1;
     }
+    z.even = !(z.digits[0] % 2);
     return z;
 }
 
@@ -232,6 +271,7 @@ BCD_int mul_bcd_pow_10(BCD_int x, uintmax_t tens)   {
         return new_BCD_int(0, false);
     }
     ret.zero = false;
+    ret.even = !!tens;
     ret.negative = x.negative;
     ret.decimal_digits = x.decimal_digits + tens;
     ret.bcd_digits = (ret.decimal_digits + 1) / 2;
@@ -262,7 +302,6 @@ BCD_int mul_bcd_pow_10(BCD_int x, uintmax_t tens)   {
     return ret;
 }
 
-BCD_int shift_bcd_left(BCD_int x, uintmax_t tens);
 inline BCD_int shift_bcd_left(BCD_int x, uintmax_t tens)    {
     return mul_bcd_pow_10(x, tens);
 }
@@ -313,7 +352,6 @@ BCD_int mul_bcd_cuint(BCD_int x, uintmax_t y)   {
     return ret;
 }
 
-BCD_int pow_cuint_cuint(uintmax_t x, uintmax_t y);
 inline BCD_int pow_cuint_cuint(uintmax_t x, uintmax_t y)    {
     // this takes roughly O(xylog_100(xy)) time
     BCD_int answer = new_BCD_int(1, false), tmp;
@@ -325,7 +363,6 @@ inline BCD_int pow_cuint_cuint(uintmax_t x, uintmax_t y)    {
     return answer;
 }
 
-unsigned short mul_dig_pair(packed_BCD_pair ab, packed_BCD_pair cd);
 inline unsigned short mul_dig_pair(packed_BCD_pair ab, packed_BCD_pair cd)  {
     // multiplies two digits pairs and returns an unsigned C short. valid range is 0 thru 9801
     unsigned char a, b, c, d;
@@ -402,10 +439,12 @@ signed char cmp_bcd(BCD_int x, BCD_int y)   {
         return (x.negative) ? 1 : -1;
     }
     for (size_t i = x.bcd_digits - 1; i != -1; i--) {
-        if (x.negative) {
-            return (x.digits[i] > y.digits[i]) ? -1 : 1;
+        if (x.digits[i] != y.digits[i]) {
+            if (x.negative) {
+                return (x.digits[i] > y.digits[i]) ? -1 : 1;
+            }
+            return (x.digits[i] > y.digits[i]) ? 1 : -1;
         }
-        return (x.digits[i] > y.digits[i]) ? 1 : -1;
     }
     return 0;
 }
@@ -427,67 +466,58 @@ BCD_int sub_bcd(BCD_int x, BCD_int y)   {
     }
     signed char cmp = cmp_bcd(x, y);
     BCD_int z;
-    if ((z.zero = !cmp))    {
+    if (unlikely((z.zero = !cmp)))  {
         return new_BCD_int(0, false);
     }
     z.negative = (cmp == -1);
-    size_t i, min_digits = min(x.bcd_digits, y.bcd_digits), max_digits = max(x.bcd_digits, y.bcd_digits);
+    size_t i;
+    const size_t min_digits = min(x.bcd_digits, y.bcd_digits), max_digits = max(x.bcd_digits, y.bcd_digits);
     z.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * max_digits);
     packed_BCD_pair a, b, c;
     bool carry = false;
     for (i = 0; i < min_digits; i++) {
         a = x.digits[i];
         b = y.digits[i];
-        if (!(carry || a))   {
-            c = b;
-            carry = false;
-        }
-        else if (!(carry || b))  {
-            c = a;
-            carry = false;
-        }
-        else    {
-            b += carry;  // incorporate carry from last pair
-            #if (!defined(NO_ASSEMBLY) && X86_COMPILER)
-                // if on these architectures, there's assembly tricks to adjust BCD in-silicon
-                #if CL_COMPILER
-                    // CL compiler has a different syntax for inline assembly, does a lot less lifting
-                    // note that the syntax here is: op [dest [, src]]
-                    // brackets indicate a C symbol is referenced rather than a register
-                    __asm   {
-                        mov al, [a];         // move C symbol a to register al
-                        sub al, [b];         // add C symbol b to register al
-                        das;                 // have the CPU make sure register al contains valid, packed BCD digits
-                        setc [carry];        // set C symbol carry to contain the carry bit, set by daa
-                        mov [c], al;         // move register al to C symbol c
-                    }
-                #else
-                    // this is the standard GCC/LLVM syntax for it
-                    // note that the syntax here is: op [[src, ] dest]
-                    // %\d indicates a C symbol is referenced, see the lookups at the end of code for which
-                    __asm__(
-                        "sub %3, %%al;"    // add the register containing b to al
-                        "das;"             // have the CPU make sure register al contains valid, packed BCD digits
-                        "setc %1;"         // set the register containing carry to hold the carry bit, set by daa
-                                           // this next section tells the compiler what to do after execution
-                      : "=a" (c),          // store the contents of register al in symbol c
-                        "=rgm" (carry)     // and a general register or memory location gets assigned to symbol carry (referenced as %1)
-                                           // then below tells the compiler what our inputs are
-                      : "a" (a),           // symbol a should get dumped to register al
-                        "rgm" (b)          // and symbol b in a general register or memory location (referenced as %3)
-                    );
-                #endif
+        b += carry;  // incorporate carry from last pair
+        #if (!defined(NO_ASSEMBLY) && X86_COMPILER)
+            // if on these architectures, there's assembly tricks to adjust BCD in-silicon
+            #if CL_COMPILER
+                // CL compiler has a different syntax for inline assembly, does a lot less lifting
+                // note that the syntax here is: op [dest [, src]]
+                // brackets indicate a C symbol is referenced rather than a register
+                __asm   {
+                    mov al, [a];         // move C symbol a to register al
+                    sub al, [b];         // add C symbol b to register al
+                    das;                 // have the CPU make sure register al contains valid, packed BCD digits
+                    setc [carry];        // set C symbol carry to contain the carry bit, set by daa
+                    mov [c], al;         // move register al to C symbol c
+                }
             #else
-                // otherwise fall back to doing it in C
-                c = a - b;                             // set c to be the result of (a - b) % 0x100
-                if ((carry = (c & 0xF0) > 0x99))    {  // if c would overflow the decimal range
-                    c -= 0x60;                         // and subtract 0x60 to make a decimal digit
-                }
-                if ((c & 0x0F) > 9)  {                 // if the lower nibble be bigger than 9
-                    c -= 0x06;                         // subtract 6 to make a decimal digit
-                }
+                // this is the standard GCC/LLVM syntax for it
+                // note that the syntax here is: op [[src, ] dest]
+                // %\d indicates a C symbol is referenced, see the lookups at the end of code for which
+                __asm__(
+                    "sub %3, %%al;"    // add the register containing b to al
+                    "das;"             // have the CPU make sure register al contains valid, packed BCD digits
+                    "setc %1;"         // set the register containing carry to hold the carry bit, set by daa
+                                        // this next section tells the compiler what to do after execution
+                    : "=a" (c),          // store the contents of register al in symbol c
+                    "=rgm" (carry)     // and a general register or memory location gets assigned to symbol carry (referenced as %1)
+                                        // then below tells the compiler what our inputs are
+                    : "a" (a),           // symbol a should get dumped to register al
+                    "rgm" (b)          // and symbol b in a general register or memory location (referenced as %3)
+                );
             #endif
+        #else
+            // otherwise fall back to doing it in C
+            c = a - b;                             // set c to be the result of (a - b) % 0x100
+            if ((carry = (c & 0xF0) > 0x99))    {  // if c would overflow the decimal range
+                c -= 0x60;                         // and subtract 0x60 to make a decimal digit
             }
+            if ((c & 0x0F) > 9)  {                 // if the lower nibble be bigger than 9
+                c -= 0x06;                         // subtract 6 to make a decimal digit
+            }
+        #endif
         z.digits[i] = c;
     }
     if (x.bcd_digits < y.bcd_digits)    {
@@ -506,11 +536,22 @@ BCD_int sub_bcd(BCD_int x, BCD_int y)   {
     for (; i < max_digits; i++) {  // if there's no more carry, but still digits left, copy directly
         z.digits[i] = x.digits[i];
     }
-    z.bcd_digits = i;
-    z.decimal_digits = z.bcd_digits / 2;
-    if (!(z.digits[i - 1] & 0xF0))  {
-        z.decimal_digits--;
+    while (--i != -1)   {
+        if (z.digits[i])    {
+            z.bcd_digits = i + 1;
+            if (z.digits[i] & 0xF0) {
+                z.decimal_digits = 2 * z.bcd_digits;
+            }
+            else    {
+                z.decimal_digits = 2 * z.bcd_digits - 1;
+            }
+            z.even = !(z.digits[0] % 2);
+            return z;
+        }
     }
+    // should not get here, but just in case
+    z.bcd_digits = z.decimal_digits = 0;
+    z.zero = z.even = true;
     return z;
 }
 
@@ -518,25 +559,65 @@ BCD_int div_bcd_pow_10(BCD_int a, uintmax_t tens)   {
     if (unlikely(a.zero))   {
         return copy_BCD_int(a);
     }
+    if (tens >= a.decimal_digits)   {
+        return new_BCD_int(0, false);
+    }
     BCD_int ret;
     ret.negative = a.negative;
     ret.zero = false;
     ret.decimal_digits = a.decimal_digits - tens;
     if (tens % 2 == 0)  {
         ret.bcd_digits = a.bcd_digits - tens / 2;
-        ret.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * ret.bcd_digits);
+        ret.digits = (packed_BCD_pair *) calloc(ret.bcd_digits, sizeof(packed_BCD_pair));
         memcpy(ret.digits, a.digits + tens / 2, ret.bcd_digits);
     }
     else    {
         // TODO
     }
+    ret.even = !(ret.digits[0] % 2);
     return ret;
 }
 
-BCD_int shift_bcd_right(BCD_int a, uintmax_t tens);
 inline BCD_int shift_bcd_right(BCD_int a, uintmax_t tens)   {
     return div_bcd_pow_10(a, tens);
 }
+
+BCD_int factorial_bcd(BCD_int x)    {
+    if (unlikely(x.negative))   {
+        return new_BCD_int(0, false);  // this is an error
+    }
+    if (unlikely(x.zero))   {
+        return new_BCD_int(1, false);
+    }
+    const BCD_int one = new_BCD_int(1, false);
+    BCD_int i = copy_BCD_int(x), ret = new_BCD_int(1, false), tmp;
+    while (!i.zero) {
+        tmp = mul_bcd(ret, i);
+        free_BCD_int(ret);
+        ret = tmp;
+        tmp = sub_bcd(i, one);
+        free_BCD_int(i);
+        i = tmp;
+    }
+    free_BCD_int(i);
+    free_BCD_int(one);
+    return ret;
+}
+
+// inline BCD_int div_bcd(BCD_int x, BCD_int y)    {
+//     BCD_int_divmod_pair pair = divmod_bcd(x, y);
+//     free_BCD_int(pair.mod);
+//     return pair.div;
+// }
+
+// inline BCD_int mod_bcd(BCD_int x, BCD_int y)    {
+//     BCD_int_divmod_pair pair = divmod_bcd(x, y);
+//     free_BCD_int(pair.div);
+//     return pair.mod;
+// }
+
+// BCD_int_divmod_pair divmod_bcd(BCD_int x, BCD_int y)    {
+// }
 
 void print_bcd(BCD_int x)   {
     if (unlikely(x.zero))   {
@@ -555,7 +636,6 @@ void print_bcd(BCD_int x)   {
     }
 }
 
-void print_bcd_ln(BCD_int x);
 inline void print_bcd_ln(BCD_int x) {
     print_bcd(x);
     printf("\n");
