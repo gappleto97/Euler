@@ -418,7 +418,7 @@ inline void imul_bcd_cuint(BCD_int *x, uintmax_t y) {
 
 inline BCD_int pow_cuint_cuint(uintmax_t x, uintmax_t y)    {
     // this takes roughly O(xylog_100(xy)) time
-    BCD_int answer = BCD_one, tmp;
+    BCD_int answer = BCD_one;
     while (y--) {
         imul_bcd_cuint(&answer, x);
     }
@@ -440,7 +440,7 @@ inline unsigned short mul_dig_pair(packed_BCD_pair ab, packed_BCD_pair cd)  {
 BCD_int mul_bcd(BCD_int x, BCD_int y)   {
     // multiplies two BCD ints by breaking them down into their component bytes and adding the results
     // this takes O(log_100(x) * log_100(y) * log_100(xy)) time
-    BCD_int answer = BCD_zero, addend, tmp;
+    BCD_int answer = BCD_zero, addend;
     if (unlikely(x.zero || y.zero)) {
         return answer;
     }
