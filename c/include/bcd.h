@@ -98,7 +98,7 @@ inline void free_BCD_int(BCD_int x) {
     }
 }
 
-inline BCD_int new_BCD_int1(intmax_t a) {
+BCD_int new_BCD_int1(intmax_t a)    {
     if (a < 0)  {
         return new_BCD_int2((uintmax_t) (-a), true);
     }
