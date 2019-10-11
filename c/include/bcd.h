@@ -189,14 +189,29 @@ BCD_int BCD_from_ascii(const char *str, size_t digits, bool negative)   {
     return ret;
 }
 
-inline BCD_int inc_bcd(BCD_int x)   {
-    return add_bcd(x, BCD_one);
-}
-
-inline void iinc_bcd(BCD_int *x)    {
-    BCD_int ret = inc_bcd(*x);
-    free_BCD_int(*x);
-    *x = ret;
+signed char cmp_bcd(BCD_int x, BCD_int y)   {
+    // returns:
+    // GREATER_THAN if x > y
+    // LESS_THAN    if y > x
+    // EQUAL_TO     else
+    if (x.negative != y.negative)   {
+        return (x.negative) ? LESS_THAN : GREATER_THAN;
+    }
+    if (x.decimal_digits != y.decimal_digits)  {
+        if (x.decimal_digits > y.decimal_digits)    {
+            return (x.negative) ? LESS_THAN : GREATER_THAN;
+        }
+        return (x.negative) ? GREATER_THAN : LESS_THAN;
+    }
+    for (size_t i = x.bcd_digits - 1; i != -1; i--) {
+        if (x.digits[i] != y.digits[i]) {
+            if (x.negative) {
+                return (x.digits[i] > y.digits[i]) ? LESS_THAN : GREATER_THAN;
+            }
+            return (x.digits[i] > y.digits[i]) ? GREATER_THAN : LESS_THAN;
+        }
+    }
+    return EQUAL_TO;
 }
 
 BCD_int add_bcd(BCD_int x, BCD_int y)   {
@@ -309,220 +324,8 @@ BCD_int add_bcd(BCD_int x, BCD_int y)   {
     return z;
 }
 
-inline void iadd_bcd(BCD_int *x, BCD_int y) {
-    BCD_int ret = add_bcd(*x, y);
-    free_BCD_int(*x);
-    *x = ret;
-}
-
-BCD_int mul_bcd_pow_10(BCD_int x, uintmax_t tens)   {
-    // this takes O(log_100(x)) time. Note that it's significantly faster if tens is even
-    // returns x * 10^tens
-    BCD_int ret;
-    if (unlikely(x.zero))   {
-        return BCD_zero;
-    }
-    ret.zero = false;
-    ret.even = x.even || !!tens;
-    ret.negative = x.negative;
-    ret.decimal_digits = x.decimal_digits + tens;
-    ret.bcd_digits = (ret.decimal_digits + 1) / 2;
-    ret.digits = (packed_BCD_pair *) calloc(ret.bcd_digits, sizeof(packed_BCD_pair));
-    if (tens % 2 == 0)  {
-        // +--+--+    +--+--+--+
-        // |23|01| -> ...|23|01|
-        // +--+--+    +--+--+--+
-        const size_t digit_diff = ret.bcd_digits - x.bcd_digits;
-        memcpy(ret.digits + digit_diff, x.digits, x.bcd_digits);
-    }
-    else    {
-        // +--+--+    +--+--+--+
-        // |23|01| -> ...|30|12|
-        // +--+--+    +--+--+--+
-        // +--+--+    +--+--+--+--+
-        // |34|12| -> ...|40|23|01|
-        // +--+--+    +--+--+--+--+
-        const size_t digit_diff = ret.bcd_digits - x.bcd_digits - ret.decimal_digits % 2;
-        // note that digit_diff needs to be adjusted on this branch, so it can't be common
-        ret.digits[digit_diff] = x.digits[0] << 4;
-        for (size_t i = 1; i < x.bcd_digits; i++)   {
-            ret.digits[i + digit_diff] = x.digits[i] << 4;
-            ret.digits[i + digit_diff] |= x.digits[i - 1] >> 4;
-        }
-        ret.digits[x.bcd_digits + digit_diff] |= x.digits[x.bcd_digits - 1] >> 4;
-    }
-    return ret;
-}
-
-inline void imul_bcd_pow_10(BCD_int *x, uintmax_t tens) {
-    BCD_int ret = mul_bcd_pow_10(*x, tens);
-    free_BCD_int(*x);
-    *x = ret;
-}
-
-inline BCD_int shift_bcd_left(BCD_int x, uintmax_t tens)    {
-    return mul_bcd_pow_10(x, tens);
-}
-
-inline void ishift_bcd_left(BCD_int *x, uintmax_t tens)    {
-    imul_bcd_pow_10(x, tens);
-}
-
-BCD_int mul_bcd_cuint(BCD_int x, uintmax_t y)   {
-    // this takes roughly O(log(y) * log(x)) time, and is nearly linear if y is a multiple of 10
-    // it works by breaking the multiplication down into groups of addition
-    // full formula for performance is something like:
-    // y = 10^a * b
-    // f(i) = sum(n = 1 thru 19, (i % 10^(n + 1)) / 10^n) + i / 10^20
-    // bool(i) = 1 if i else 0
-    // time = O(bool(a) * log_100(x) + f(b) * log_100(xy))
-    if (unlikely(!y || x.zero)) {
-        return BCD_zero;
-    }
-    unsigned char tens = 0;  // will up size when there's an 848-bit system
-    BCD_int ret, mul_by_power_10;
-    // first remove factors of ten
-    while (y % 10 == 0) {
-        y /= 10;
-        ++tens;
-    }
-    if (tens)   {
-        ret = mul_bcd_pow_10(x, tens);
-    }
-    else    {
-        ret = BCD_zero;
-    }
-    // then for decreasing powers of ten, batch additions
-    uintmax_t p = (sizeof(uintmax_t) == 16) ? MAX_POW_10_128 : MAX_POW_10_64;
-    tens = (sizeof(uintmax_t) == 16) ? POW_OF_MAX_POW_10_128 : POW_OF_MAX_POW_10_64;
-    for (; p > 1; p /= 10, --tens)  {
-        while (y >= p)  {
-            mul_by_power_10 = mul_bcd_pow_10(x, tens);
-            iadd_bcd(&ret, mul_by_power_10);
-            free_BCD_int(mul_by_power_10);
-            y -= p;
-        }
-    }
-    // then do simple addition
-    while (y--) {
-        iadd_bcd(&ret, x);
-    }
-    return ret;
-}
-
-inline void imul_bcd_cuint(BCD_int *x, uintmax_t y) {
-    BCD_int ret = mul_bcd_cuint(*x, y);
-    free_BCD_int(*x);
-    *x = ret;
-}
-
-inline BCD_int pow_cuint_cuint(uintmax_t x, uintmax_t y)    {
-    // this takes roughly O(xylog_100(xy)) time
-    BCD_int answer = BCD_one;
-    while (y--) {
-        imul_bcd_cuint(&answer, x);
-    }
-    return answer;
-}
-
-inline unsigned short mul_dig_pair(packed_BCD_pair ab, packed_BCD_pair cd)  {
-    // multiplies two digits pairs and returns an unsigned C short. valid range is 0 thru 9801
-    unsigned char a, b, c, d;
-    // first unpack the digits
-    a = ab >> 4;
-    b = ab & 0xF;
-    c = cd >> 4;
-    d = cd & 0xF;
-    // then solve by FOIL
-    return 100 * a * c + 10 * (a * d + b * c) + b * d;
-}
-
-BCD_int mul_bcd(BCD_int x, BCD_int y)   {
-    // multiplies two BCD ints by breaking them down into their component bytes and adding the results
-    // this takes O(log_100(x) * log_100(y) * log_100(xy)) time
-    BCD_int answer = BCD_zero, addend;
-    if (unlikely(x.zero || y.zero)) {
-        return answer;
-    }
-    size_t i, j;
-    unsigned short staging;
-    uintmax_t ipow_10 = 0, pow_10;
-    for (i = 0; i < x.bcd_digits; i++, ipow_10 += 2)  {
-        for (j = 0, pow_10 = ipow_10; j < y.bcd_digits; j++, pow_10 += 2) {
-            staging = mul_dig_pair(x.digits[i], y.digits[j]);
-            if (staging == 0)   {
-                continue;
-            }
-            if (likely(pow_10)) {
-                addend = new_BCD_int2(staging, false);
-                imul_bcd_pow_10(&addend, pow_10);  // this was not added to performance analysis
-            }
-            else    {
-                addend = new_BCD_int2(staging, false);;
-            }
-            iadd_bcd(&answer, addend);
-            free_BCD_int(addend);
-        }
-    }
-    answer.negative = !(x.negative == y.negative);
-    return answer;
-}
-
-inline void imul_bcd(BCD_int *x, BCD_int y) {
-    BCD_int ret = mul_bcd(*x, y);
-    free_BCD_int(*x);
-    *x = ret;
-}
-
-BCD_int pow_bcd(BCD_int x, BCD_int y)   {
-    // this takes O(y * 2log_100(x)^3) time
-    BCD_int answer = BCD_one;
-    while (!y.zero) {
-        imul_bcd(&answer, x);
-        idec_bcd(&y);
-    }
-    return answer;
-}
-
-inline void ipow_bcd(BCD_int *x, BCD_int y) {
-    BCD_int ret = pow_bcd(*x, y);
-    free_BCD_int(*x);
-    *x = ret;
-}
-
-signed char cmp_bcd(BCD_int x, BCD_int y)   {
-    // returns:
-    // GREATER_THAN if x > y
-    // LESS_THAN    if y > x
-    // EQUAL_TO     else
-    if (x.negative != y.negative)   {
-        return (x.negative) ? LESS_THAN : GREATER_THAN;
-    }
-    if (x.decimal_digits != y.decimal_digits)  {
-        if (x.decimal_digits > y.decimal_digits)    {
-            return (x.negative) ? LESS_THAN : GREATER_THAN;
-        }
-        return (x.negative) ? GREATER_THAN : LESS_THAN;
-    }
-    for (size_t i = x.bcd_digits - 1; i != -1; i--) {
-        if (x.digits[i] != y.digits[i]) {
-            if (x.negative) {
-                return (x.digits[i] > y.digits[i]) ? LESS_THAN : GREATER_THAN;
-            }
-            return (x.digits[i] > y.digits[i]) ? GREATER_THAN : LESS_THAN;
-        }
-    }
-    return EQUAL_TO;
-}
-
-inline BCD_int dec_bcd(BCD_int x)   {
-    return sub_bcd(x, BCD_one);
-}
-
-inline void idec_bcd(BCD_int *x)    {
-    BCD_int ret = dec_bcd(*x);
-    free_BCD_int(*x);
-    *x = ret;
+inline BCD_int inc_bcd(BCD_int x)   {
+    return add_bcd(x, BCD_one);
 }
 
 BCD_int sub_bcd(BCD_int x, BCD_int y)   {
@@ -633,10 +436,228 @@ BCD_int sub_bcd(BCD_int x, BCD_int y)   {
     return BCD_zero;
 }
 
+
+inline BCD_int dec_bcd(BCD_int x)   {
+    return sub_bcd(x, BCD_one);
+}
+
+BCD_int mul_bcd(BCD_int x, BCD_int y)   {
+    // multiplies two BCD ints by breaking them down into their component bytes and adding the results
+    // this takes O(log_100(x) * log_100(y) * log_100(xy)) time
+    BCD_int answer = BCD_zero, addend;
+    if (unlikely(x.zero || y.zero)) {
+        return answer;
+    }
+    size_t i, j;
+    unsigned short staging;
+    uintmax_t ipow_10 = 0, pow_10;
+    for (i = 0; i < x.bcd_digits; i++, ipow_10 += 2)  {
+        for (j = 0, pow_10 = ipow_10; j < y.bcd_digits; j++, pow_10 += 2) {
+            staging = mul_dig_pair(x.digits[i], y.digits[j]);
+            if (staging == 0)   {
+                continue;
+            }
+            if (likely(pow_10)) {
+                addend = new_BCD_int2(staging, false);
+                imul_bcd_pow_10(&addend, pow_10);  // this was not added to performance analysis
+            }
+            else    {
+                addend = new_BCD_int2(staging, false);;
+            }
+            iadd_bcd(&answer, addend);
+            free_BCD_int(addend);
+        }
+    }
+    answer.negative = !(x.negative == y.negative);
+    return answer;
+}
+
+// inline BCD_int div_bcd(BCD_int x, BCD_int y)    {
+//     BCD_int_divmod_pair pair = divmod_bcd(x, y);
+//     free_BCD_int(pair.mod);
+//     return pair.div;
+// }
+
+// inline BCD_int mod_bcd(BCD_int x, BCD_int y)    {
+//     BCD_int_divmod_pair pair = divmod_bcd(x, y);
+//     free_BCD_int(pair.div);
+//     return pair.mod;
+// }
+
+// BCD_int_divmod_pair divmod_bcd(BCD_int x, BCD_int y)    {
+// }
+
+BCD_int pow_bcd(BCD_int x, BCD_int y)   {
+    // this takes O(y * 2log_100(x)^3) time
+    BCD_int answer = BCD_one;
+    while (!y.zero) {
+        imul_bcd(&answer, x);
+        idec_bcd(&y);
+    }
+    return answer;
+}
+
+BCD_int factorial_bcd(BCD_int x)    {
+    if (unlikely(x.negative))   {
+        return BCD_zero;  // this is an error
+    }
+    if (unlikely(x.zero))   {
+        return BCD_one;
+    }
+    BCD_int i = dec_bcd(x), ret = copy_BCD_int(x);
+    while (!i.zero) {
+        imul_bcd(&ret, i);
+        idec_bcd(&i);
+    }
+    free_BCD_int(i);
+    return ret;
+}
+
+inline void iadd_bcd(BCD_int *x, BCD_int y) {
+    BCD_int ret = add_bcd(*x, y);
+    free_BCD_int(*x);
+    *x = ret;
+}
+
+inline void iinc_bcd(BCD_int *x)    {
+    BCD_int ret = inc_bcd(*x);
+    free_BCD_int(*x);
+    *x = ret;
+}
+
 inline void isub_bcd(BCD_int *x, BCD_int y) {
     BCD_int ret = sub_bcd(*x, y);
     free_BCD_int(*x);
     *x = ret;
+}
+
+inline void idec_bcd(BCD_int *x)    {
+    BCD_int ret = dec_bcd(*x);
+    free_BCD_int(*x);
+    *x = ret;
+}
+
+inline void imul_bcd(BCD_int *x, BCD_int y) {
+    BCD_int ret = mul_bcd(*x, y);
+    free_BCD_int(*x);
+    *x = ret;
+}
+
+// inline void idiv_bcd(BCD_int *x, BCD_int y)    {
+//     BCD_int ret = div_bcd(*x, y);
+//     free_BCD_int(*x);
+//     *x = ret;
+// }
+
+// inline void imod_bcd(BCD_int *x, BCD_int y)    {
+//     BCD_int ret = mod_bcd(*x, y);
+//     free_BCD_int(*x);
+//     *x = ret;
+// }
+
+// inline void idivmod_bcd(BCD_int *x, BCD_int *y)    {
+//     BCD_int_divmod_pair ret = divmod_bcd(*x, *y);
+//     free_BCD_int(*x);
+//     free_BCD_int(*y);
+//     *x = ret.div;
+//     *y = ret.mod;
+// }
+
+inline void ipow_bcd(BCD_int *x, BCD_int y) {
+    BCD_int ret = pow_bcd(*x, y);
+    free_BCD_int(*x);
+    *x = ret;
+}
+
+inline void ifactorial_bcd(BCD_int *x)   {
+    BCD_int ret = factorial_bcd(*x);
+    free_BCD_int(*x);
+    *x = ret;
+}
+
+BCD_int mul_bcd_cuint(BCD_int x, uintmax_t y)   {
+    // this takes roughly O(log(y) * log(x)) time, and is nearly linear if y is a multiple of 10
+    // it works by breaking the multiplication down into groups of addition
+    // full formula for performance is something like:
+    // y = 10^a * b
+    // f(i) = sum(n = 1 thru 19, (i % 10^(n + 1)) / 10^n) + i / 10^20
+    // bool(i) = 1 if i else 0
+    // time = O(bool(a) * log_100(x) + f(b) * log_100(xy))
+    if (unlikely(!y || x.zero)) {
+        return BCD_zero;
+    }
+    unsigned char tens = 0;  // will up size when there's an 848-bit system
+    BCD_int ret, mul_by_power_10;
+    // first remove factors of ten
+    while (y % 10 == 0) {
+        y /= 10;
+        ++tens;
+    }
+    if (tens)   {
+        ret = mul_bcd_pow_10(x, tens);
+    }
+    else    {
+        ret = BCD_zero;
+    }
+    // then for decreasing powers of ten, batch additions
+    uintmax_t p = (sizeof(uintmax_t) == 16) ? MAX_POW_10_128 : MAX_POW_10_64;
+    tens = (sizeof(uintmax_t) == 16) ? POW_OF_MAX_POW_10_128 : POW_OF_MAX_POW_10_64;
+    for (; p > 1; p /= 10, --tens)  {
+        while (y >= p)  {
+            mul_by_power_10 = mul_bcd_pow_10(x, tens);
+            iadd_bcd(&ret, mul_by_power_10);
+            free_BCD_int(mul_by_power_10);
+            y -= p;
+        }
+    }
+    // then do simple addition
+    while (y--) {
+        iadd_bcd(&ret, x);
+    }
+    return ret;
+}
+
+BCD_int mul_bcd_pow_10(BCD_int x, uintmax_t tens)   {
+    // this takes O(log_100(x)) time. Note that it's significantly faster if tens is even
+    // returns x * 10^tens
+    BCD_int ret;
+    if (unlikely(x.zero))   {
+        return BCD_zero;
+    }
+    ret.zero = false;
+    ret.even = x.even || !!tens;
+    ret.negative = x.negative;
+    ret.decimal_digits = x.decimal_digits + tens;
+    ret.bcd_digits = (ret.decimal_digits + 1) / 2;
+    ret.digits = (packed_BCD_pair *) calloc(ret.bcd_digits, sizeof(packed_BCD_pair));
+    if (tens % 2 == 0)  {
+        // +--+--+    +--+--+--+
+        // |23|01| -> ...|23|01|
+        // +--+--+    +--+--+--+
+        const size_t digit_diff = ret.bcd_digits - x.bcd_digits;
+        memcpy(ret.digits + digit_diff, x.digits, x.bcd_digits);
+    }
+    else    {
+        // +--+--+    +--+--+--+
+        // |23|01| -> ...|30|12|
+        // +--+--+    +--+--+--+
+        // +--+--+    +--+--+--+--+
+        // |34|12| -> ...|40|23|01|
+        // +--+--+    +--+--+--+--+
+        const size_t digit_diff = ret.bcd_digits - x.bcd_digits - ret.decimal_digits % 2;
+        // note that digit_diff needs to be adjusted on this branch, so it can't be common
+        ret.digits[digit_diff] = x.digits[0] << 4;
+        for (size_t i = 1; i < x.bcd_digits; i++)   {
+            ret.digits[i + digit_diff] = x.digits[i] << 4;
+            ret.digits[i + digit_diff] |= x.digits[i - 1] >> 4;
+        }
+        ret.digits[x.bcd_digits + digit_diff] |= x.digits[x.bcd_digits - 1] >> 4;
+    }
+    return ret;
+}
+
+inline BCD_int shift_bcd_left(BCD_int x, uintmax_t tens)    {
+    return mul_bcd_pow_10(x, tens);
 }
 
 BCD_int div_bcd_pow_10(BCD_int a, uintmax_t tens)   {
@@ -662,76 +683,56 @@ BCD_int div_bcd_pow_10(BCD_int a, uintmax_t tens)   {
     return ret;
 }
 
+inline BCD_int shift_bcd_right(BCD_int a, uintmax_t tens)   {
+    return div_bcd_pow_10(a, tens);
+}
+
+inline BCD_int pow_cuint_cuint(uintmax_t x, uintmax_t y)    {
+    // this takes roughly O(xylog_100(xy)) time
+    BCD_int answer = BCD_one;
+    while (y--) {
+        imul_bcd_cuint(&answer, x);
+    }
+    return answer;
+}
+
+inline void imul_bcd_cuint(BCD_int *x, uintmax_t y) {
+    BCD_int ret = mul_bcd_cuint(*x, y);
+    free_BCD_int(*x);
+    *x = ret;
+}
+
+inline void imul_bcd_pow_10(BCD_int *x, uintmax_t tens) {
+    BCD_int ret = mul_bcd_pow_10(*x, tens);
+    free_BCD_int(*x);
+    *x = ret;
+}
+
+inline void ishift_bcd_left(BCD_int *x, uintmax_t tens)    {
+    imul_bcd_pow_10(x, tens);
+}
+
 inline void idiv_bcd_pow_10(BCD_int *a, uintmax_t tens) {
     BCD_int ret = mul_bcd_cuint(*a, tens);
     free_BCD_int(*a);
     *a = ret;
 }
 
-inline BCD_int shift_bcd_right(BCD_int a, uintmax_t tens)   {
-    return div_bcd_pow_10(a, tens);
-}
-
 inline void ishift_bcd_right(BCD_int *a, uintmax_t tens)   {
     idiv_bcd_pow_10(a, tens);
 }
 
-BCD_int factorial_bcd(BCD_int x)    {
-    if (unlikely(x.negative))   {
-        return BCD_zero;  // this is an error
-    }
-    if (unlikely(x.zero))   {
-        return BCD_one;
-    }
-    BCD_int i = dec_bcd(x), ret = copy_BCD_int(x);
-    while (!i.zero) {
-        imul_bcd(&ret, i);
-        idec_bcd(&i);
-    }
-    free_BCD_int(i);
-    return ret;
+inline unsigned short mul_dig_pair(packed_BCD_pair ab, packed_BCD_pair cd)  {
+    // multiplies two digits pairs and returns an unsigned C short. valid range is 0 thru 9801
+    unsigned char a, b, c, d;
+    // first unpack the digits
+    a = ab >> 4;
+    b = ab & 0xF;
+    c = cd >> 4;
+    d = cd & 0xF;
+    // then solve by FOIL
+    return 100 * a * c + 10 * (a * d + b * c) + b * d;
 }
-
-inline void ifactorial_bcd(BCD_int *x)   {
-    BCD_int ret = factorial_bcd(*x);
-    free_BCD_int(*x);
-    *x = ret;
-}
-
-// inline BCD_int div_bcd(BCD_int x, BCD_int y)    {
-//     BCD_int_divmod_pair pair = divmod_bcd(x, y);
-//     free_BCD_int(pair.mod);
-//     return pair.div;
-// }
-
-// inline BCD_int mod_bcd(BCD_int x, BCD_int y)    {
-//     BCD_int_divmod_pair pair = divmod_bcd(x, y);
-//     free_BCD_int(pair.div);
-//     return pair.mod;
-// }
-
-// BCD_int_divmod_pair divmod_bcd(BCD_int x, BCD_int y)    {
-// }
-
-// inline void idiv_bcd(BCD_int *x, BCD_int y)    {
-//     BCD_int ret = div_bcd(*x, y);
-//     free_BCD_int(*x);
-//     *x = ret;
-// }
-
-// inline void imod_bcd(BCD_int *x, BCD_int y)    {
-//     BCD_int ret = mod_bcd(*x, y);
-//     free_BCD_int(*x);
-//     *x = ret;
-// }
-
-// inline void idivmod_bcd(BCD_int *x, BCD_int *y)    {
-//     BCD_int_divmod_pair ret = divmod_bcd(*x, *y);
-//     free_BCD_int(*x);
-//     free_BCD_int(*y);
-//     *x = ret.div;
-//     *y = ret.mod;
-// }
 
 void print_bcd(BCD_int x)   {
     if (unlikely(x.zero))   {
