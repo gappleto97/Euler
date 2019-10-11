@@ -95,9 +95,9 @@ uintmax_t advance_prime_counter(prime_counter *pc) {
                         new_size = PRIME_CACHE_SIZE_LIMIT;
                     }
 #endif
-                    void *tmp = realloc(prime_cache, new_size * sizeof(uintmax_t));
+                    uintmax_t *tmp = (uintmax_t *) realloc(prime_cache, new_size * sizeof(uintmax_t));
                     if (tmp != NULL)    {
-                        prime_cache = (uintmax_t *) tmp;
+                        prime_cache = tmp;
                         prime_cache_size = new_size;
                         prime_cache[prime_cache_idx++] = prime_cache_max = p;
                     }
@@ -330,6 +330,7 @@ uintmax_t is_composite(uintmax_t n)   {
     }
     prime_factor_counter iter = prime_factors(n);
     uintmax_t ret = next(iter);
+    free_prime_factor_counter(iter);
     if (ret == n)   {
         return 0;
     }
