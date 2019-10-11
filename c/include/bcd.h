@@ -11,6 +11,7 @@
     #include "math.h"
 #endif
 
+
 typedef unsigned char packed_BCD_pair;
 typedef struct {
     // a little-endian, arbitrary-precision, binary-coded decimal number
@@ -31,7 +32,8 @@ typedef struct {
 void free_BCD_int(BCD_int x);
 
 // constructors
-BCD_int new_BCD_int(uintmax_t a, bool negative);
+BCD_int new_BCD_int1(intmax_t a);
+BCD_int new_BCD_int2(uintmax_t a, bool negative);
 BCD_int copy_BCD_int(BCD_int a);
 BCD_int BCD_from_bytes(const unsigned char *str, size_t chars, bool negative, bool little_endian);
 BCD_int BCD_from_ascii(const char *str, size_t digits, bool negative);
@@ -39,7 +41,9 @@ BCD_int BCD_from_ascii(const char *str, size_t digits, bool negative);
 // operators
 signed char cmp_bcd(BCD_int x, BCD_int y);
 BCD_int add_bcd(BCD_int x, BCD_int y);
+BCD_int inc_bcd(BCD_int x);
 BCD_int sub_bcd(BCD_int x, BCD_int y);
+BCD_int dec_bcd(BCD_int x);
 BCD_int mul_bcd(BCD_int x, BCD_int y);
 // TODO:
 // BCD_int div_bcd(BCD_int x, BCD_int y);
@@ -61,14 +65,27 @@ void print_bcd(BCD_int x);
 void print_bcd_ln(BCD_int x);
 unsigned short mul_dig_pair(packed_BCD_pair ab, packed_BCD_pair cd);
 
+// constants
+const BCD_int BCD_one  = {(packed_BCD_pair *) "\x01", 1, 1, false, false, false};
+const BCD_int BCD_zero = {(packed_BCD_pair *) NULL,   0, 0, false, true,  true};
+const signed char GREATER_THAN =  1;
+const signed char EQUAL_TO     =  0;
+const signed char LESS_THAN    = -1;
 
 inline void free_BCD_int(BCD_int x) {
-    free(x.digits);
-    x.digits = NULL;
-    x.bcd_digits = x.decimal_digits = x.negative = x.zero = 0;
+    if (x.digits != BCD_one.digits && x.digits != BCD_zero.digits)  {
+        free(x.digits);
+    }
 }
 
-BCD_int new_BCD_int(uintmax_t a, bool negative)   {
+inline BCD_int new_BCD_int1(intmax_t a) {
+    if (a < 0)  {
+        return new_BCD_int2((uintmax_t) (-a), true);
+    }
+    return new_BCD_int2((uintmax_t) a, false);
+}
+
+BCD_int new_BCD_int2(uintmax_t a, bool negative)   {
     BCD_int c;
     #if !PCC_COMPILER
         c.decimal_digits = ceil(log10(a + 1));
@@ -88,21 +105,18 @@ BCD_int new_BCD_int(uintmax_t a, bool negative)   {
 }
 
 inline BCD_int copy_BCD_int(BCD_int a)  {
-    BCD_int b = a;
-    b.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * b.bcd_digits);
-    memcpy(b.digits, a.digits, b.bcd_digits);
-    return b;
+    packed_BCD_pair *digits = a.digits;
+    a.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * a.bcd_digits);
+    memcpy(a.digits, digits, a.bcd_digits);
+    return a;
 }
 
 BCD_int BCD_from_bytes(const unsigned char *str, size_t chars, bool negative, bool little_endian)   {
-    // converts a bytestring to a little-endian BCD int
-    BCD_int c;
+    // converts a BCD-formatted bytestring to a little-endian BCD int
     if (!chars || str == NULL)  {
-        c.zero = c.even = true;
-        c.bcd_digits = c.decimal_digits = c.negative = 0;
-        c.digits = NULL;
-        return c;
+        return BCD_zero;
     }
+    BCD_int c;
     size_t i;
     c.zero = false;
     c.negative = negative;
@@ -119,30 +133,29 @@ BCD_int BCD_from_bytes(const unsigned char *str, size_t chars, bool negative, bo
         }
     }
     for (i = chars - 1; i != -1; i--)   {
-        if (c.digits[i] & 0xF0) {
-            c.decimal_digits = i * 2 + 1;
+        if (c.digits[i])    {
             c.bcd_digits = i + 1;
-            break;
-        }
-        if (c.digits[i] & 0x0F) {
-            c.decimal_digits = i * 2;
-            c.bcd_digits = i + 1;
+            if (c.digits[i] & 0xF0) {
+                c.decimal_digits = i * 2 + 1;
+            }
+            else    {
+                c.decimal_digits = i * 2;
+            }
             break;
         }
     }
     if (unlikely(i == -1))  {
-        c.zero = c.even = true;
-        c.bcd_digits = c.decimal_digits = c.negative = 0;
-        free(c.digits);
-        c.digits = NULL;
+        free_BCD_int(c);
+        return BCD_zero;
     }
     c.even = !(c.digits[0] % 2);
     return c;
 }
 
-inline BCD_int BCD_from_ascii(const char *str, size_t digits, bool negative)    {
+BCD_int BCD_from_ascii(const char *str, size_t digits, bool negative)   {
     // packs an ASCII digit string into big-endian bytes, then runs through BCD_from_bytes()
-    size_t length = (digits + 1) / 2, i, j;
+    const size_t length = (digits + 1) / 2;
+    size_t i, j;
     unsigned char *bytes = (unsigned char *) malloc(sizeof(unsigned char) * length);
     j = i = digits % 2;
     if (i)  {
@@ -156,8 +169,15 @@ inline BCD_int BCD_from_ascii(const char *str, size_t digits, bool negative)    
     return ret;
 }
 
+inline BCD_int inc_bcd(BCD_int x)   {
+    return add_bcd(x, BCD_one);
+}
+
 BCD_int add_bcd(BCD_int x, BCD_int y)   {
     // performing this on two n-digit numbers will take O(n) time
+    if (unlikely(x.zero && y.zero)) {
+        return BCD_zero;
+    }
     if (unlikely(x.zero))   {
         return copy_BCD_int(y);
     }
@@ -268,10 +288,10 @@ BCD_int mul_bcd_pow_10(BCD_int x, uintmax_t tens)   {
     // returns x * 10^tens
     BCD_int ret;
     if (unlikely(x.zero))   {
-        return new_BCD_int(0, false);
+        return BCD_zero;
     }
     ret.zero = false;
-    ret.even = !!tens;
+    ret.even = x.even || !!tens;
     ret.negative = x.negative;
     ret.decimal_digits = x.decimal_digits + tens;
     ret.bcd_digits = (ret.decimal_digits + 1) / 2;
@@ -315,7 +335,7 @@ BCD_int mul_bcd_cuint(BCD_int x, uintmax_t y)   {
     // bool(i) = 1 if i else 0
     // time = O(bool(a) * log_100(x) + f(b) * log_100(xy))
     if (unlikely(!y || x.zero)) {
-        return new_BCD_int(0, false);
+        return BCD_zero;
     }
     unsigned char tens = 0;  // will up size when there's an 848-bit system
     BCD_int ret, sum, mul_by_power_10;
@@ -328,7 +348,7 @@ BCD_int mul_bcd_cuint(BCD_int x, uintmax_t y)   {
         ret = mul_bcd_pow_10(x, tens);
     }
     else    {
-        ret = new_BCD_int(0, x.negative);
+        ret = BCD_zero;
     }
     // then for decreasing powers of ten, batch additions
     uintmax_t p = (sizeof(uintmax_t) == 16) ? MAX_POW_10_128 : MAX_POW_10_64;
@@ -354,7 +374,7 @@ BCD_int mul_bcd_cuint(BCD_int x, uintmax_t y)   {
 
 inline BCD_int pow_cuint_cuint(uintmax_t x, uintmax_t y)    {
     // this takes roughly O(xylog_100(xy)) time
-    BCD_int answer = new_BCD_int(1, false), tmp;
+    BCD_int answer = BCD_one, tmp;
     while (y--) {
         tmp = mul_bcd_cuint(answer, x);
         free_BCD_int(answer);
@@ -378,7 +398,7 @@ inline unsigned short mul_dig_pair(packed_BCD_pair ab, packed_BCD_pair cd)  {
 BCD_int mul_bcd(BCD_int x, BCD_int y)   {
     // multiplies two BCD ints by breaking them down into their component bytes and adding the results
     // this takes O(log_100(x) * log_100(y) * log_100(xy)) time
-    BCD_int answer = new_BCD_int(0, false), addend, tmp;
+    BCD_int answer = BCD_zero, addend, tmp;
     if (unlikely(x.zero || y.zero)) {
         return answer;
     }
@@ -392,12 +412,12 @@ BCD_int mul_bcd(BCD_int x, BCD_int y)   {
                 continue;
             }
             if (likely(pow_10)) {
-                tmp = new_BCD_int(staging, false);
+                tmp = new_BCD_int2(staging, false);
                 addend = mul_bcd_pow_10(tmp, pow_10);  // this was not added to performance analysis
                 free_BCD_int(tmp);
             }
             else    {
-                addend = new_BCD_int(staging, false);;
+                addend = new_BCD_int2(staging, false);;
             }
             tmp = add_bcd(answer, addend);
             free_BCD_int(addend);
@@ -411,16 +431,15 @@ BCD_int mul_bcd(BCD_int x, BCD_int y)   {
 
 BCD_int pow_bcd(BCD_int x, BCD_int y)   {
     // this takes O(y * 2log_100(x) * log_100(x)^2) time
-    BCD_int answer = new_BCD_int(1, false), tmp, one = new_BCD_int(1, false);
+    BCD_int answer = BCD_one, tmp;
     while (!y.zero) {
         tmp = mul_bcd(answer, x);
         free_BCD_int(answer);
         answer = tmp;
-        tmp = sub_bcd(y, one);
+        tmp = dec_bcd(y);
         free_BCD_int(y);
         y = tmp;
     }
-    free_BCD_int(one);
     return answer;
 }
 
@@ -430,26 +449,33 @@ signed char cmp_bcd(BCD_int x, BCD_int y)   {
     // -1 if y > x
     // else 0
     if (x.negative != y.negative)   {
-        return (x.negative) ? -1 : 1;
+        return (x.negative) ? LESS_THAN : GREATER_THAN;
     }
     if (x.decimal_digits != y.decimal_digits)  {
         if (x.decimal_digits > y.decimal_digits)    {
-            return (x.negative) ? -1 : 1;
+            return (x.negative) ? LESS_THAN : GREATER_THAN;
         }
-        return (x.negative) ? 1 : -1;
+        return (x.negative) ? GREATER_THAN : LESS_THAN;
     }
     for (size_t i = x.bcd_digits - 1; i != -1; i--) {
         if (x.digits[i] != y.digits[i]) {
             if (x.negative) {
-                return (x.digits[i] > y.digits[i]) ? -1 : 1;
+                return (x.digits[i] > y.digits[i]) ? LESS_THAN : GREATER_THAN;
             }
-            return (x.digits[i] > y.digits[i]) ? 1 : -1;
+            return (x.digits[i] > y.digits[i]) ? GREATER_THAN : LESS_THAN;
         }
     }
-    return 0;
+    return EQUAL_TO;
+}
+
+inline BCD_int dec_bcd(BCD_int x)   {
+    return sub_bcd(x, BCD_one);
 }
 
 BCD_int sub_bcd(BCD_int x, BCD_int y)   {
+    if (unlikely(x.zero && y.zero)) {
+        return BCD_zero;
+    }
     if (unlikely(x.zero))   {
         BCD_int ret = copy_BCD_int(y);
         ret.negative = !ret.negative;
@@ -467,7 +493,7 @@ BCD_int sub_bcd(BCD_int x, BCD_int y)   {
     signed char cmp = cmp_bcd(x, y);
     BCD_int z;
     if (unlikely((z.zero = !cmp)))  {
-        return new_BCD_int(0, false);
+        return BCD_zero;
     }
     z.negative = (cmp == -1);
     size_t i;
@@ -550,9 +576,8 @@ BCD_int sub_bcd(BCD_int x, BCD_int y)   {
         }
     }
     // should not get here, but just in case
-    z.bcd_digits = z.decimal_digits = 0;
-    z.zero = z.even = true;
-    return z;
+    free_BCD_int(z);
+    return BCD_zero;
 }
 
 BCD_int div_bcd_pow_10(BCD_int a, uintmax_t tens)   {
@@ -560,7 +585,7 @@ BCD_int div_bcd_pow_10(BCD_int a, uintmax_t tens)   {
         return copy_BCD_int(a);
     }
     if (tens >= a.decimal_digits)   {
-        return new_BCD_int(0, false);
+        return BCD_zero;
     }
     BCD_int ret;
     ret.negative = a.negative;
@@ -568,7 +593,7 @@ BCD_int div_bcd_pow_10(BCD_int a, uintmax_t tens)   {
     ret.decimal_digits = a.decimal_digits - tens;
     if (tens % 2 == 0)  {
         ret.bcd_digits = a.bcd_digits - tens / 2;
-        ret.digits = (packed_BCD_pair *) calloc(ret.bcd_digits, sizeof(packed_BCD_pair));
+        ret.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * ret.bcd_digits);
         memcpy(ret.digits, a.digits + tens / 2, ret.bcd_digits);
     }
     else    {
@@ -584,23 +609,21 @@ inline BCD_int shift_bcd_right(BCD_int a, uintmax_t tens)   {
 
 BCD_int factorial_bcd(BCD_int x)    {
     if (unlikely(x.negative))   {
-        return new_BCD_int(0, false);  // this is an error
+        return BCD_zero;  // this is an error
     }
     if (unlikely(x.zero))   {
-        return new_BCD_int(1, false);
+        return BCD_one;
     }
-    const BCD_int one = new_BCD_int(1, false);
-    BCD_int i = copy_BCD_int(x), ret = new_BCD_int(1, false), tmp;
+    BCD_int i = dec_bcd(x), ret = copy_BCD_int(x), tmp;
     while (!i.zero) {
         tmp = mul_bcd(ret, i);
         free_BCD_int(ret);
         ret = tmp;
-        tmp = sub_bcd(i, one);
+        tmp = dec_bcd(i);
         free_BCD_int(i);
         i = tmp;
     }
     free_BCD_int(i);
-    free_BCD_int(one);
     return ret;
 }
 

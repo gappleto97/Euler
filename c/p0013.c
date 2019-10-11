@@ -217,7 +217,7 @@ static const char numbers[100][50] = {
 
 
 int main(int argc, char const *argv[])  {
-    BCD_int answer, tmp1, tmp2 = new_BCD_int(0, false);
+    BCD_int answer, tmp1, tmp2 = BCD_zero;
     for (size_t i = 0; i < 100; i++)    {
         tmp1 = BCD_from_ascii(numbers[i], 50, false);
         answer = add_bcd(tmp1, tmp2);
