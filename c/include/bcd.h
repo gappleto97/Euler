@@ -52,6 +52,19 @@ BCD_int mul_bcd(BCD_int x, BCD_int y);
 BCD_int pow_bcd(BCD_int x, BCD_int y);
 BCD_int factorial_bcd(BCD_int x);
 
+// in-place operators
+void iadd_bcd(BCD_int *x, BCD_int y);
+void iinc_bcd(BCD_int *x);
+void isub_bcd(BCD_int *x, BCD_int y);
+void idec_bcd(BCD_int *x);
+void imul_bcd(BCD_int *x, BCD_int y);
+// TODO:
+// void idiv_bcd(BCD_int *x, BCD_int y);
+// void imod_bcd(BCD_int *x, BCD_int y);
+// void idivmod_bcd(BCD_int *x, BCD_int *y);
+void ipow_bcd(BCD_int *x, BCD_int y);
+void ifactorial_bcd(BCD_int *x);
+
 // operators with C integers
 BCD_int mul_bcd_cuint(BCD_int x, uintmax_t y);
 BCD_int mul_bcd_pow_10(BCD_int x, uintmax_t tens);
@@ -59,6 +72,13 @@ BCD_int shift_bcd_left(BCD_int a, uintmax_t tens);
 BCD_int div_bcd_pow_10(BCD_int x, uintmax_t tens);  // not yet supported for odd tens
 BCD_int shift_bcd_right(BCD_int a, uintmax_t tens);  // not yet supported for odd tens
 BCD_int pow_cuint_cuint(uintmax_t x, uintmax_t y);
+
+// in-place operators with C integers
+void imul_bcd_cuint(BCD_int *x, uintmax_t y);
+void imul_bcd_pow_10(BCD_int *x, uintmax_t tens);
+void ishift_bcd_left(BCD_int *a, uintmax_t tens);
+void idiv_bcd_pow_10(BCD_int *x, uintmax_t tens);  // not yet supported for odd tens
+void ishift_bcd_right(BCD_int *a, uintmax_t tens);  // not yet supported for odd tens
 
 // utility methods
 void print_bcd(BCD_int x);
@@ -173,6 +193,12 @@ inline BCD_int inc_bcd(BCD_int x)   {
     return add_bcd(x, BCD_one);
 }
 
+inline void iinc_bcd(BCD_int *x)    {
+    BCD_int ret = inc_bcd(*x);
+    free_BCD_int(*x);
+    *x = ret;
+}
+
 BCD_int add_bcd(BCD_int x, BCD_int y)   {
     // performing this on two n-digit numbers will take O(n) time
     if (unlikely(x.zero && y.zero)) {
@@ -283,6 +309,12 @@ BCD_int add_bcd(BCD_int x, BCD_int y)   {
     return z;
 }
 
+inline void iadd_bcd(BCD_int *x, BCD_int y) {
+    BCD_int ret = add_bcd(*x, y);
+    free_BCD_int(*x);
+    *x = ret;
+}
+
 BCD_int mul_bcd_pow_10(BCD_int x, uintmax_t tens)   {
     // this takes O(log_100(x)) time. Note that it's significantly faster if tens is even
     // returns x * 10^tens
@@ -322,8 +354,18 @@ BCD_int mul_bcd_pow_10(BCD_int x, uintmax_t tens)   {
     return ret;
 }
 
+inline void imul_bcd_pow_10(BCD_int *x, uintmax_t tens) {
+    BCD_int ret = mul_bcd_pow_10(*x, tens);
+    free_BCD_int(*x);
+    *x = ret;
+}
+
 inline BCD_int shift_bcd_left(BCD_int x, uintmax_t tens)    {
     return mul_bcd_pow_10(x, tens);
+}
+
+inline void ishift_bcd_left(BCD_int *x, uintmax_t tens)    {
+    imul_bcd_pow_10(x, tens);
 }
 
 BCD_int mul_bcd_cuint(BCD_int x, uintmax_t y)   {
@@ -338,7 +380,7 @@ BCD_int mul_bcd_cuint(BCD_int x, uintmax_t y)   {
         return BCD_zero;
     }
     unsigned char tens = 0;  // will up size when there's an 848-bit system
-    BCD_int ret, sum, mul_by_power_10;
+    BCD_int ret, mul_by_power_10;
     // first remove factors of ten
     while (y % 10 == 0) {
         y /= 10;
@@ -356,29 +398,29 @@ BCD_int mul_bcd_cuint(BCD_int x, uintmax_t y)   {
     for (; p > 1; p /= 10, --tens)  {
         while (y >= p)  {
             mul_by_power_10 = mul_bcd_pow_10(x, tens);
-            sum = add_bcd(ret, mul_by_power_10);
+            iadd_bcd(&ret, mul_by_power_10);
             free_BCD_int(mul_by_power_10);
-            free_BCD_int(ret);
-            ret = sum;
             y -= p;
         }
     }
     // then do simple addition
     while (y--) {
-        sum = add_bcd(ret, x);
-        free_BCD_int(ret);
-        ret = sum;
+        iadd_bcd(&ret, x);
     }
     return ret;
+}
+
+inline void imul_bcd_cuint(BCD_int *x, uintmax_t y) {
+    BCD_int ret = mul_bcd_cuint(*x, y);
+    free_BCD_int(*x);
+    *x = ret;
 }
 
 inline BCD_int pow_cuint_cuint(uintmax_t x, uintmax_t y)    {
     // this takes roughly O(xylog_100(xy)) time
     BCD_int answer = BCD_one, tmp;
     while (y--) {
-        tmp = mul_bcd_cuint(answer, x);
-        free_BCD_int(answer);
-        answer = tmp;
+        imul_bcd_cuint(&answer, x);
     }
     return answer;
 }
@@ -412,42 +454,47 @@ BCD_int mul_bcd(BCD_int x, BCD_int y)   {
                 continue;
             }
             if (likely(pow_10)) {
-                tmp = new_BCD_int2(staging, false);
-                addend = mul_bcd_pow_10(tmp, pow_10);  // this was not added to performance analysis
-                free_BCD_int(tmp);
+                addend = new_BCD_int2(staging, false);
+                imul_bcd_pow_10(&addend, pow_10);  // this was not added to performance analysis
             }
             else    {
                 addend = new_BCD_int2(staging, false);;
             }
-            tmp = add_bcd(answer, addend);
+            iadd_bcd(&answer, addend);
             free_BCD_int(addend);
-            free_BCD_int(answer);
-            answer = tmp;
         }
     }
     answer.negative = !(x.negative == y.negative);
     return answer;
 }
 
+inline void imul_bcd(BCD_int *x, BCD_int y) {
+    BCD_int ret = mul_bcd(*x, y);
+    free_BCD_int(*x);
+    *x = ret;
+}
+
 BCD_int pow_bcd(BCD_int x, BCD_int y)   {
-    // this takes O(y * 2log_100(x) * log_100(x)^2) time
-    BCD_int answer = BCD_one, tmp;
+    // this takes O(y * 2log_100(x)^3) time
+    BCD_int answer = BCD_one;
     while (!y.zero) {
-        tmp = mul_bcd(answer, x);
-        free_BCD_int(answer);
-        answer = tmp;
-        tmp = dec_bcd(y);
-        free_BCD_int(y);
-        y = tmp;
+        imul_bcd(&answer, x);
+        idec_bcd(&y);
     }
     return answer;
 }
 
+inline void ipow_bcd(BCD_int *x, BCD_int y) {
+    BCD_int ret = pow_bcd(*x, y);
+    free_BCD_int(*x);
+    *x = ret;
+}
+
 signed char cmp_bcd(BCD_int x, BCD_int y)   {
     // returns:
-    // 1 if x > y
-    // -1 if y > x
-    // else 0
+    // GREATER_THAN if x > y
+    // LESS_THAN    if y > x
+    // EQUAL_TO     else
     if (x.negative != y.negative)   {
         return (x.negative) ? LESS_THAN : GREATER_THAN;
     }
@@ -470,6 +517,12 @@ signed char cmp_bcd(BCD_int x, BCD_int y)   {
 
 inline BCD_int dec_bcd(BCD_int x)   {
     return sub_bcd(x, BCD_one);
+}
+
+inline void idec_bcd(BCD_int *x)    {
+    BCD_int ret = dec_bcd(*x);
+    free_BCD_int(*x);
+    *x = ret;
 }
 
 BCD_int sub_bcd(BCD_int x, BCD_int y)   {
@@ -580,6 +633,12 @@ BCD_int sub_bcd(BCD_int x, BCD_int y)   {
     return BCD_zero;
 }
 
+inline void isub_bcd(BCD_int *x, BCD_int y) {
+    BCD_int ret = sub_bcd(*x, y);
+    free_BCD_int(*x);
+    *x = ret;
+}
+
 BCD_int div_bcd_pow_10(BCD_int a, uintmax_t tens)   {
     if (unlikely(a.zero))   {
         return copy_BCD_int(a);
@@ -603,8 +662,18 @@ BCD_int div_bcd_pow_10(BCD_int a, uintmax_t tens)   {
     return ret;
 }
 
+inline void idiv_bcd_pow_10(BCD_int *a, uintmax_t tens) {
+    BCD_int ret = mul_bcd_cuint(*a, tens);
+    free_BCD_int(*a);
+    *a = ret;
+}
+
 inline BCD_int shift_bcd_right(BCD_int a, uintmax_t tens)   {
     return div_bcd_pow_10(a, tens);
+}
+
+inline void ishift_bcd_right(BCD_int *a, uintmax_t tens)   {
+    idiv_bcd_pow_10(a, tens);
 }
 
 BCD_int factorial_bcd(BCD_int x)    {
@@ -614,17 +683,19 @@ BCD_int factorial_bcd(BCD_int x)    {
     if (unlikely(x.zero))   {
         return BCD_one;
     }
-    BCD_int i = dec_bcd(x), ret = copy_BCD_int(x), tmp;
+    BCD_int i = dec_bcd(x), ret = copy_BCD_int(x);
     while (!i.zero) {
-        tmp = mul_bcd(ret, i);
-        free_BCD_int(ret);
-        ret = tmp;
-        tmp = dec_bcd(i);
-        free_BCD_int(i);
-        i = tmp;
+        imul_bcd(&ret, i);
+        idec_bcd(&i);
     }
     free_BCD_int(i);
     return ret;
+}
+
+inline void ifactorial_bcd(BCD_int *x)   {
+    BCD_int ret = factorial_bcd(*x);
+    free_BCD_int(*x);
+    *x = ret;
 }
 
 // inline BCD_int div_bcd(BCD_int x, BCD_int y)    {
@@ -640,6 +711,26 @@ BCD_int factorial_bcd(BCD_int x)    {
 // }
 
 // BCD_int_divmod_pair divmod_bcd(BCD_int x, BCD_int y)    {
+// }
+
+// inline void idiv_bcd(BCD_int *x, BCD_int y)    {
+//     BCD_int ret = div_bcd(*x, y);
+//     free_BCD_int(*x);
+//     *x = ret;
+// }
+
+// inline void imod_bcd(BCD_int *x, BCD_int y)    {
+//     BCD_int ret = mod_bcd(*x, y);
+//     free_BCD_int(*x);
+//     *x = ret;
+// }
+
+// inline void idivmod_bcd(BCD_int *x, BCD_int *y)    {
+//     BCD_int_divmod_pair ret = divmod_bcd(*x, *y);
+//     free_BCD_int(*x);
+//     free_BCD_int(*y);
+//     *x = ret.div;
+//     *y = ret.mod;
 // }
 
 void print_bcd(BCD_int x)   {
