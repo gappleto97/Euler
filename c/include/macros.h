@@ -60,9 +60,11 @@
 // compiler workaround section
 
 #if PCC_COMPILER
-    #warning static is being redefined to '' because you are on PCC. \
-    This is happening because PCC does not allow reproducible builds with the static keyword used globally. \
-    Make sure this does not have side effects, or undefine/redefine static per-usage.
+    #ifndef NO_USER_WARNINGS
+        #warning static is being redefined to '' because you are on PCC. \
+        This is happening because PCC does not allow reproducible builds with the static keyword used globally. \
+        Make sure this does not have side effects, or undefine/redefine static per-usage.
+    #endif
     #define static
 #endif
 
@@ -85,6 +87,8 @@
 #endif
 
 // constants section
+
+#define EXTERN_PRINTF extern int __cdecl printf(const char *const _Format, ...)
 
 #define MAX_FACTORIAL_64 20
 #define MAX_FACTORIAL_128 34

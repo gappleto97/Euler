@@ -21,6 +21,7 @@ int main(int argc, char const *argv[])  {
         answer += power.digits[i] & 0x0F;
         answer += power.digits[i] >> 4;
     }
+    free_BCD_int(&power);
     printf("%llu\n", answer);
     return 0;
 }

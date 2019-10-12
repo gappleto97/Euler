@@ -35,6 +35,7 @@ answers = {
     14: 837799,
     15: 137846528820,
     16: 1366,
+    20: 648,
     34: 40730,
     76: 190569291,
 }
@@ -158,7 +159,7 @@ templates = {
     'CL': "cl -Fe:{{1}} -Fo{}\\ -O2 -GL -GF -GW -Brepro -TC {{0}}".format(BUILD_FOLDER.joinpath('objs')),
     'TCC': "tcc -lm -Wall -Werror -o {1} {0}",
     'ICC': GCC_TEMPLATE.format('icc'),
-    'PCC': "pcc -O2 -o {1} {0}",
+    'PCC': "pcc -O2 -DNO_USER_WARNINGS -Wall -Werror -o {1} {0}",
     'AOCC': CLANG_TEMPLATE.format(AOCC_BINARY, CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=1'),
 }
 

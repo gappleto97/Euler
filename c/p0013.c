@@ -217,17 +217,16 @@ static const char numbers[100][50] = {
 
 
 int main(int argc, char const *argv[])  {
-    BCD_int answer, tmp1, tmp2 = new_BCD_int(0, false);
+    BCD_int answer = BCD_zero, tmp;
     for (size_t i = 0; i < 100; i++)    {
-        tmp1 = BCD_from_ascii(numbers[i], 50, false);
-        answer = add_bcd(tmp1, tmp2);
-        free_BCD_int(tmp1);
-        free_BCD_int(tmp2);
-        tmp2 = answer;
+        tmp = BCD_from_ascii(numbers[i], 50, false);
+        iadd_bcd(&answer, tmp);
+        free_BCD_int(&tmp);
     }
-    answer = div_bcd_pow_10(tmp2, tmp2.decimal_digits - 10);
-    free_BCD_int(tmp2);
+    tmp = div_bcd_pow_10(answer, answer.decimal_digits - 10);
+    free_BCD_int(&answer);
+    answer = tmp;
     print_bcd(answer);
-    free_BCD_int(answer);
+    free_BCD_int(&answer);
     return 0;
 }
