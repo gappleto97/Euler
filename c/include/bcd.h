@@ -50,8 +50,9 @@ typedef struct BCD_int  {
     bool even : 1;             // indicates the integer is even
     bool constant : 1;         // indicates that the integer is a constant and will not be touched by free_bcd_int()
     bool nan : 1;              // indicates that the integer is NaN
-    BCD_error error : 4;       // this specifies why the BCD_int is NaN, if it is
-    BCD_error orig_error : 4;  // this specifies the oringal source of NaN, rather than the most recent
+    // note: the following are 5 bits instead of 4 because some compilers assume they are signed
+    BCD_error error : 5;       // this specifies why the BCD_int is NaN, if it is
+    BCD_error orig_error : 5;  // this specifies the oringal source of NaN, rather than the most recent
 } BCD_int;
 
 // constants
