@@ -2,7 +2,6 @@
 #define PRIMES_H
 
 #include <stdint.h>
-#include <inttypes.h>
 #include "macros.h"
 
 #if !PCC_COMPILER

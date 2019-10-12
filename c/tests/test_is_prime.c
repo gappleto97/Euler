@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <inttypes.h>
 #include "../include/primes.h"
 
 #ifndef MAX_PRIME
