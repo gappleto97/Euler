@@ -5,9 +5,9 @@
 
 typedef struct factor_counter factor_counter;
 struct factor_counter   {
-    IteratorHead(uintmax_t, factor_counter);
     uintmax_t target;
     uintmax_t current;
+    IteratorTail(uintmax_t, factor_counter);
 };
 
 uintmax_t advance_factor_counter(factor_counter *fc);

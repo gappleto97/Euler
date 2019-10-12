@@ -5,10 +5,10 @@
 
 typedef struct fibonacci fibonacci;
 struct fibonacci    {
-    IteratorHead(uintmax_t, fibonacci);
     uintmax_t a;
     uintmax_t b;
     uintmax_t limit;
+    IteratorTail(uintmax_t, fibonacci);
 };
 
 uintmax_t advance_fibonacci(fibonacci *fib)    {

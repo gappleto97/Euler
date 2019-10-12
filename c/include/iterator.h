@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include "macros.h"
 
-#define IteratorHead(return_type, struct_type) \
+#define IteratorTail(return_type, struct_type) \
     return_type (*iterator_function)(struct_type *it); \
     bool exhausted : 1; \
     bool started : 1; \
@@ -21,6 +21,8 @@
      * @phase: An indicator that flips every time the iterator moves
      *
      * See counter for an example implementation
+     * It is recommended that you put this at the end of your struct for better packing, but if
+     * you are going to use bitfield elements, it should go before that.
      */
 
 #define IterationHead(it) \
@@ -74,12 +76,12 @@ struct counter {
      * @stop: The point where the counter is exhausted
      * @step: The amount to step by each time you iterate the counter
      *
-     * See IteratorHead
+     * See IteratorTail
      */
-    IteratorHead(uintmax_t, counter);
     uintmax_t idx;
     uintmax_t stop;
     intmax_t step;
+    IteratorTail(uintmax_t, counter);
 };
 
 uintmax_t iterate_counter(counter *i);

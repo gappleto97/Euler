@@ -13,9 +13,9 @@
 
 typedef struct digit_counter digit_counter;
 struct digit_counter    {
-    IteratorHead(unsigned char, digit_counter);
     unsigned char *digits;
     size_t idx;
+    IteratorTail(unsigned char, digit_counter);
 };
 
 unsigned char advance_digit_counter(digit_counter *dc)  {

@@ -31,9 +31,9 @@ divisors?
 
 typedef struct triangle_iterator triangle_iterator;
 struct triangle_iterator    {
-    IteratorHead(unsigned long long, triangle_iterator);
     unsigned long long current;
     unsigned long long idx;
+    IteratorTail(unsigned long long, triangle_iterator);
 };
 
 unsigned long long advance_triangle_iterator(triangle_iterator *ti) {

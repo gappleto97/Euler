@@ -25,12 +25,12 @@ struct prime_counter {
      * @idx: The current position of the counter
      * @stop: The point where the counter is exhausted
      *
-     * See IteratorHead
+     * See IteratorTail
      */
-    IteratorHead(uintmax_t, prime_counter);
     size_t idx;
     uintmax_t stop;
     prime_sieve *ps;
+    IteratorTail(uintmax_t, prime_counter);
 };
 
 static uintmax_t *prime_cache;
@@ -154,15 +154,15 @@ struct prime_sieve {
      * @candidate: The current candidate prime number
      * @source: The source of new reference prime numbers
      *
-     * See IteratorHead
+     * See IteratorTail
      */
-    IteratorHead(uintmax_t, prime_sieve);
     uintmax_t *sieve;
     size_t sieve_len;
     uintmax_t prime;
     uintmax_t prime_squared;
     uintmax_t candidate;
     prime_counter source;
+    IteratorTail(uintmax_t, prime_sieve);
 };
 
 uintmax_t advance_prime_sieve(prime_sieve *ps) {
@@ -270,12 +270,12 @@ struct prime_factor_counter {
      * @current: The prime number most recently tested
      * @pc: The prime number generator being used to test
      *
-     * See IteratorHead
+     * See IteratorTail
      */
-    IteratorHead(uintmax_t, prime_factor_counter);
     uintmax_t target;
     uintmax_t current;
     prime_counter pc;
+    IteratorTail(uintmax_t, prime_factor_counter);
 };
 
 uintmax_t advance_prime_factor_counter(prime_factor_counter *pfc)  {
