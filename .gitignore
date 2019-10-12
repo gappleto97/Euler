@@ -8,3 +8,4 @@ javascript/node_modules/**
 **/*.exe
 **/build/**
 venv/**
+**/build/**
