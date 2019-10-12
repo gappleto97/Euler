@@ -35,7 +35,7 @@ int main(int argc, char const *argv[])  {
     BCD_int a = BCD_one, b = BCD_one, c;
     while (b.decimal_digits < 1000) {
         c = add_bcd(a, b);
-        free_BCD_int(a);
+        free_BCD_int(&a);
         a = b;
         b = c;
         answer++;
