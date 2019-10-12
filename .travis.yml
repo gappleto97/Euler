@@ -33,6 +33,11 @@ matrix:
       os: osx
       env: COMPILER_OVERRIDE=gcc GCC_OVERRIDE=gcc-9
       osx_image: xcode10.1
+      addons:
+        homebrew:
+          packages:
+          - gcc
+          update: true
     - language: generic
       python: 3.6
       os: osx
@@ -55,6 +60,11 @@ matrix:
       python: pypy3
       os: osx
       env: pyver=pypy3 pydist=homebrew NO_SLOW=true
+      addons:
+        homebrew:
+          packages:
+          - pypy3
+          update: true
     - language: generic
       python: 3.7
       os: osx

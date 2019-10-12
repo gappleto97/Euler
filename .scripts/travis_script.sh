@@ -4,10 +4,8 @@ if [ $pyver ]; then
     if [ $pyver != pypy3 ]; then
         git clone https://github.com/gappleto97/terryfy;
         source terryfy/travis_tools.sh;
-        get_python_environment  $pydist $pyver;
-    fi
-    if [ $pyver == pypy3 ]; then
-        brew install $pyver;
+        get_python_environment $pydist $pyver;
+    else
         export PYTHON_EXE=$pyver;
         export PIP_CMD="$PYTHON_EXE -m pip";
     fi
@@ -28,8 +26,5 @@ elif [ $jsver ]; then
         make jstest;
     fi
 else
-    if [ $GCC_OVERRIDE ]; then
-            brew install gcc;
-    fi
     make ctest;
 fi
