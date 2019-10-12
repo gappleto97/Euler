@@ -221,12 +221,12 @@ int main(int argc, char const *argv[])  {
     for (size_t i = 0; i < 100; i++)    {
         tmp = BCD_from_ascii(numbers[i], 50, false);
         iadd_bcd(&answer, tmp);
-        free_BCD_int(tmp);
+        free_BCD_int(&tmp);
     }
     tmp = div_bcd_pow_10(answer, answer.decimal_digits - 10);
-    free_BCD_int(answer);
+    free_BCD_int(&answer);
     answer = tmp;
     print_bcd(answer);
-    free_BCD_int(answer);
+    free_BCD_int(&answer);
     return 0;
 }

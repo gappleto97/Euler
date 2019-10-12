@@ -24,6 +24,7 @@ int main(int argc, char const *argv[])  {
         answer += factorial.digits[i] & 0x0F;
         answer += factorial.digits[i] >> 4;
     }
+    free_BCD_int(&factorial);
     printf("%llu", answer);
     return 0;
 }
