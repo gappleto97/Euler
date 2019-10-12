@@ -162,7 +162,7 @@ BCD_int new_BCD_int2(uintmax_t a, bool negative)   {
     c.constant = false;
     c.zero = !a;
     c.nan = false;
-    c.error = NON_ERR;
+    c.orig_error = c.error = NON_ERR;
     for (size_t i = 0; i < c.bcd_digits; i++)   {
         c.digits[i] = (((a % 100) / 10) << 4) | (a % 10);
         a /= 100;
@@ -190,7 +190,7 @@ BCD_int BCD_from_bytes(const unsigned char *const str, size_t chars, bool negati
     BCD_int c;
     size_t i;
     c.zero = c.constant = c.nan = false;
-    c.error = NON_ERR;
+    c.orig_error = c.error = NON_ERR;
     c.negative = negative;
     c.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * chars);
     if (unlikely(c.digits == NULL)) {
@@ -306,7 +306,7 @@ BCD_int add_bcd(BCD_int x, BCD_int y)   {
     BCD_int z;
     size_t i, min_digits = min(x.bcd_digits, y.bcd_digits), max_digits = max(x.bcd_digits, y.bcd_digits);
     z.nan = z.constant = false;
-    z.error = NON_ERR;
+    z.orig_error = z.error = NON_ERR;
     z.zero = false;  // result can't be zero because x and y are non-zero and share a sign
     z.negative = x.negative;  // we know this is also y.negative
     z.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * (max_digits + 1));
@@ -438,7 +438,7 @@ BCD_int sub_bcd(BCD_int x, BCD_int y)   {
     }
     z.negative = (cmp == -1);
     z.nan = z.constant = false;
-    z.error = NON_ERR;
+    z.orig_error = z.error = NON_ERR;
     size_t i;
     const size_t min_digits = min(x.bcd_digits, y.bcd_digits), max_digits = max(x.bcd_digits, y.bcd_digits);
     z.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * max_digits);
@@ -805,7 +805,7 @@ BCD_int mul_bcd_pow_10(BCD_int x, uintmax_t tens)   {
         return copy_BCD_int(x);
     }
     ret.zero = ret.nan = ret.constant = false;
-    ret.error = NON_ERR;
+    ret.orig_error = ret.error = NON_ERR;
     ret.even = x.even || !!tens;
     ret.negative = x.negative;
     ret.decimal_digits = x.decimal_digits + tens;
@@ -862,7 +862,7 @@ BCD_int div_bcd_pow_10(BCD_int a, uintmax_t tens)   {
     BCD_int ret;
     ret.negative = a.negative;
     ret.zero = ret.nan = ret.constant = false;
-    ret.error = NON_ERR;
+    ret.orig_error = ret.error = NON_ERR;
     ret.decimal_digits = a.decimal_digits - tens;
     if (tens % 2 == 0)  {
         ret.bcd_digits = a.bcd_digits - tens / 2;
