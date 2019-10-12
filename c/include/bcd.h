@@ -23,7 +23,7 @@ typedef enum comp_t {
 
 typedef enum BCD_error  {
     NON_ERR,    // there wasn't an error
-    ORIG_NAN,   // this is the orignal NaN
+    ORIG_NAN,   // this is the original NaN
     IS_FREED,   // this BCD_int has been freed
     ADD_NAN,    // you tried to add NaN
     SUB_NAN,    // you tried to subtract NaN
