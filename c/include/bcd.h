@@ -12,7 +12,7 @@
 
 EXTERN_PRINTF;
 
-typedef unsigned char packed_BCD_pair;
+typedef uint8_t packed_BCD_pair;
 
 typedef enum comp_t {
     EQUAL_TO,      // x == y
@@ -35,35 +35,35 @@ typedef enum BCD_error  {
     POW_NEG,    // you tried to use a negative power
     FACT_NEG,   // you tried to get a negative factorial
     DIV_ZERO,   // you tried to divide by zero
-    // 0b1101   // reserved
+    NO_MEM      // you are out of memory to make new ints
     // 0b1110   // reserved
     // 0b1111   // reserved
 } BCD_error;
 
-typedef struct {
+typedef struct BCD_int  {
     // a little-endian, arbitrary-precision, binary-coded decimal number
-    packed_BCD_pair *digits;  // the raw digits of the integer, DO NOT modify directly
-    size_t bcd_digits;        // the byte count of digits
-    size_t decimal_digits;    // the number of decimal digits in this integer
-    bool negative : 1;        // indicates the integer is negative
-    bool zero : 1;            // indicates the integer is 0
-    bool even : 1;            // indicates the integer is even
-    bool constant : 1;        // indicates that the integer is a constant and will not be touched by free_bcd_int()
-    union {
-        char nan : 4;         // indicates that the integer is NaN
-        BCD_error error : 4;  // this specifies why the BCD_int is NaN, if it is
-    };
+    packed_BCD_pair *digits;   // the raw digits of the integer, DO NOT modify directly
+    size_t bcd_digits;         // the byte count of digits
+    size_t decimal_digits;     // the number of decimal digits in this integer
+    bool negative : 1;         // indicates the integer is negative
+    bool zero : 1;             // indicates the integer is 0
+    bool even : 1;             // indicates the integer is even
+    bool constant : 1;         // indicates that the integer is a constant and will not be touched by free_bcd_int()
+    bool nan : 1;              // indicates that the integer is NaN
+    BCD_error error : 4;       // this specifies why the BCD_int is NaN, if it is
+    BCD_error orig_error : 4;  // this specifies the oringal source of NaN, rather than the most recent
 } BCD_int;
 
 // constants
-const BCD_int BCD_one  = {(packed_BCD_pair *) "\x01", 1, 1, false, false, false, true, {NON_ERR}};
-const BCD_int BCD_zero = {(packed_BCD_pair *) NULL,   0, 0, false, true,  true,  true, {NON_ERR}};
-const BCD_int BCD_nan  = {(packed_BCD_pair *) NULL,   0, 0, false, false, false, true, {ORIG_NAN}};
+const BCD_int BCD_one  = {(packed_BCD_pair *) "\x01", 1, 1, false, false, false, true, false, NON_ERR,  NON_ERR};
+const BCD_int BCD_zero = {(packed_BCD_pair *) NULL,   0, 0, false, true,  true,  true, false, NON_ERR,  NON_ERR};
+const BCD_int BCD_nan  = {(packed_BCD_pair *) NULL,   0, 0, false, false, false, true, true,  ORIG_NAN, ORIG_NAN};
 
 // destructor
 void free_BCD_int(BCD_int *x);  // if not constant, sets all flags to 0, error to IS_FREED
 
 // constructors
+// note: all constructors may return BCD_nan with error set to NO_MEM
 BCD_int new_BCD_int1  (intmax_t a);
 BCD_int new_BCD_int2  (uintmax_t a,                    bool negative);
 BCD_int copy_BCD_int  (BCD_int a);
@@ -72,6 +72,7 @@ BCD_int BCD_from_ascii(const char *const str,          size_t digits, bool negat
 
 // operators
 // note: all operators will return BCD_nan if fed BCD_nan, and set error to {OP}_NAN
+// note: all operators that return BCD_nan may return BCD_nan with error set to NO_MEM
 comp_t  cmp_bcd      (BCD_int x, BCD_int y);                // returns NO_COMP if either is NaN
 BCD_int add_bcd      (BCD_int x, BCD_int y);
 BCD_int inc_bcd      (BCD_int x);
@@ -86,6 +87,7 @@ BCD_int factorial_bcd(BCD_int x);                           // sets error to FAC
 
 // in-place operators
 // note: all operators will return BCD_nan if fed BCD_nan, and set error to {OP}_NAN
+// note: all operators that return BCD_nan may return BCD_nan with error set to NO_MEM
 void iadd_bcd      (BCD_int *x, BCD_int y);
 void iinc_bcd      (BCD_int *x);
 void isub_bcd      (BCD_int *x, BCD_int y);
@@ -99,6 +101,7 @@ void ifactorial_bcd(BCD_int *x);              // sets error to FACT_NEG if x is 
 
 // operators with C integers
 // note: all operators will return BCD_nan if fed BCD_nan, and set error to {OP}_NAN
+// note: all operators that return BCD_nan may return BCD_nan with error set to NO_MEM
 BCD_int mul_bcd_cint   (BCD_int x,   intmax_t y);
 BCD_int mul_bcd_cuint  (BCD_int x,   uintmax_t y);
 BCD_int mul_bcd_pow_10 (BCD_int x,   uintmax_t tens);
@@ -110,6 +113,7 @@ BCD_int pow_cuint_cuint(uintmax_t x, uintmax_t y);
 
 // in-place operators with C integers
 // note: all operators will return BCD_nan if fed BCD_nan, and set error to {OP}_NAN
+// note: all operators that return BCD_nan may return BCD_nan with error set to NO_MEM
 void imul_bcd_cint   (BCD_int *x, intmax_t y);
 void imul_bcd_cuint  (BCD_int *x, uintmax_t y);
 void imul_bcd_pow_10 (BCD_int *x, uintmax_t tens);
@@ -126,7 +130,7 @@ inline void free_BCD_int(BCD_int *x)    {
     if (x->error != IS_FREED && !x->constant)   {
         free(x->digits);
         x->digits = NULL;
-        x->error = IS_FREED;
+        x->orig_error = x->error = IS_FREED;
         x->zero = x->even = x->negative = false;
     }
 }
@@ -147,11 +151,16 @@ BCD_int new_BCD_int2(uintmax_t a, bool negative)   {
     #endif
     c.bcd_digits = (c.decimal_digits + 1) / 2;
     c.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * c.bcd_digits);
+    if (unlikely(c.digits == NULL)) {
+        c = BCD_nan;
+        c.orig_error = c.error = NO_MEM;
+        return c;
+    }
     c.negative = negative;
-    c.zero = !a;
     c.even = !(a % 2);
-    c.nan = false;
     c.constant = false;
+    c.zero = !a;
+    c.nan = false;
     c.error = NON_ERR;
     for (size_t i = 0; i < c.bcd_digits; i++)   {
         c.digits[i] = (((a % 100) / 10) << 4) | (a % 10);
@@ -163,6 +172,11 @@ BCD_int new_BCD_int2(uintmax_t a, bool negative)   {
 inline BCD_int copy_BCD_int(BCD_int a)  {
     packed_BCD_pair *digits = a.digits;
     a.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * a.bcd_digits);
+    if (unlikely(a.digits == NULL)) {
+        a = BCD_nan;
+        a.orig_error = a.error = NO_MEM;
+        return a;
+    }
     memcpy(a.digits, digits, a.bcd_digits);
     return a;
 }
@@ -174,10 +188,15 @@ BCD_int BCD_from_bytes(const unsigned char *const str, size_t chars, bool negati
     }
     BCD_int c;
     size_t i;
-    c.zero = c.constant = false;
-    c.nan = false;
+    c.zero = c.constant = c.nan = false;
+    c.error = NON_ERR;
     c.negative = negative;
     c.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * chars);
+    if (unlikely(c.digits == NULL)) {
+        c = BCD_nan;
+        c.orig_error = c.error = NO_MEM;
+        return c;
+    }
     if (little_endian)  {
         for (i = 0; i < chars; i++) {
             c.digits[i] = str[i];
@@ -214,6 +233,11 @@ BCD_int BCD_from_ascii(const char *const str, size_t digits, bool negative) {
     const size_t length = (digits + 1) / 2;
     size_t i, j;
     unsigned char *bytes = (unsigned char *) malloc(sizeof(unsigned char) * length);
+    if (unlikely(bytes == NULL)) {
+        BCD_int ret = BCD_nan;
+        ret.orig_error = ret.error = NO_MEM;
+        return ret;
+    }
     j = i = digits % 2;
     if (i)  {
         bytes[0] = str[0] - '0';
@@ -260,6 +284,7 @@ BCD_int add_bcd(BCD_int x, BCD_int y)   {
     if (unlikely(x.nan || y.nan))   {
         BCD_int ret = BCD_nan;
         ret.error = ADD_NAN;
+        ret.orig_error = (x.nan) ? x.orig_error : y.orig_error;
         return ret;
     }
     if (unlikely(x.zero && y.zero)) {
@@ -279,11 +304,16 @@ BCD_int add_bcd(BCD_int x, BCD_int y)   {
     }
     BCD_int z;
     size_t i, min_digits = min(x.bcd_digits, y.bcd_digits), max_digits = max(x.bcd_digits, y.bcd_digits);
-    z.nan = false;
-    z.constant = false;
+    z.nan = z.constant = false;
+    z.error = NON_ERR;
     z.zero = false;  // result can't be zero because x and y are non-zero and share a sign
     z.negative = x.negative;  // we know this is also y.negative
     z.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * (max_digits + 1));
+    if (unlikely(z.digits == NULL)) {
+        z = BCD_nan;
+        z.orig_error = z.error = NO_MEM;
+        return z;
+    }
     packed_BCD_pair a, b, c;
     bool overflow = false;
     for (i = 0; i < min_digits; i++) {
@@ -380,6 +410,7 @@ BCD_int sub_bcd(BCD_int x, BCD_int y)   {
     if (unlikely(x.nan || y.nan))   {
         BCD_int ret = BCD_nan;
         ret.error = SUB_NAN;
+        ret.orig_error = (x.nan) ? x.orig_error : y.orig_error;
         return ret;
     }
     if (unlikely(x.zero && y.zero)) {
@@ -405,11 +436,16 @@ BCD_int sub_bcd(BCD_int x, BCD_int y)   {
         return BCD_zero;
     }
     z.negative = (cmp == -1);
-    z.nan = false;
-    z.constant = false;
+    z.nan = z.constant = false;
+    z.error = NON_ERR;
     size_t i;
     const size_t min_digits = min(x.bcd_digits, y.bcd_digits), max_digits = max(x.bcd_digits, y.bcd_digits);
     z.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * max_digits);
+    if (unlikely(z.digits == NULL)) {
+        z = BCD_nan;
+        z.orig_error = z.error = NO_MEM;
+        return z;
+    }
     packed_BCD_pair a, b, c;
     bool carry = false;
     for (i = 0; i < min_digits; i++) {
@@ -503,6 +539,7 @@ BCD_int mul_bcd(BCD_int x, BCD_int y)   {
     if (unlikely(x.nan || y.nan))   {
         answer = BCD_nan;
         answer.error = MUL_NAN;
+        answer.orig_error = (x.nan) ? x.orig_error : y.orig_error;
         return answer;
     }
     if (unlikely(x.zero || y.zero)) {
@@ -550,6 +587,15 @@ BCD_int divmod_bcd(BCD_int x, BCD_int y, BCD_int *mod)  {
     if (unlikely(x.nan || y.nan || y.zero)) {
         BCD_int fail = BCD_nan;
         fail.error = (y.zero) ? DIV_ZERO : DIV_NAN;
+        if (x.nan)  {
+            fail.orig_error = x.orig_error;
+        }
+        else if (y.nan) {
+            fail.orig_error = y.orig_error;
+        }
+        else    {
+            fail.orig_error = DIV_ZERO;
+        }
         *mod = fail;
         return fail;
     }
@@ -584,6 +630,15 @@ BCD_int pow_bcd(BCD_int x, BCD_int y)   {
     if (unlikely(x.nan || y.nan || y.negative)) {
         BCD_int ret = BCD_nan;
         ret.error = (y.negative) ? POW_NEG : POW_NAN;
+        if (x.nan)  {
+            ret.orig_error = x.orig_error;
+        }
+        else if (y.nan) {
+            ret.orig_error = y.orig_error;
+        }
+        else    {
+            ret.orig_error = DIV_ZERO;
+        }
         return ret;
     }
     BCD_int answer = BCD_one;
@@ -598,6 +653,7 @@ BCD_int factorial_bcd(BCD_int x)    {
     if (unlikely(x.nan || x.negative))  {
         BCD_int ret = BCD_nan;
         ret.error = (x.nan) ? FACT_NAN : FACT_NEG;
+        ret.orig_error = (x.nan) ? x.orig_error : FACT_NEG;
         return ret;
     }
     if (unlikely(x.zero || (x.decimal_digits == 1 && x.digits[0] == 1)))    {
@@ -694,6 +750,7 @@ BCD_int mul_bcd_cuint(BCD_int x, uintmax_t y)   {
     if (unlikely(x.nan))    {
         BCD_int ret = BCD_nan;
         ret.error = MUL_NAN;
+        ret.orig_error = x.orig_error;
         return ret;
     }
     if (unlikely(!y || x.zero)) {
@@ -737,6 +794,7 @@ BCD_int mul_bcd_pow_10(BCD_int x, uintmax_t tens)   {
     if (unlikely(x.nan))    {
         ret = BCD_nan;
         ret.error = SHIFT_NAN;
+        ret.orig_error = x.orig_error;
         return ret;
     }
     if (unlikely(x.zero))   {
@@ -745,14 +803,18 @@ BCD_int mul_bcd_pow_10(BCD_int x, uintmax_t tens)   {
     if (unlikely(!tens))    {
         return copy_BCD_int(x);
     }
-    ret.zero = false;
-    ret.nan = false;
-    ret.constant = false;
+    ret.zero = ret.nan = ret.constant = false;
+    ret.error = NON_ERR;
     ret.even = x.even || !!tens;
     ret.negative = x.negative;
     ret.decimal_digits = x.decimal_digits + tens;
     ret.bcd_digits = (ret.decimal_digits + 1) / 2;
     ret.digits = (packed_BCD_pair *) calloc(ret.bcd_digits, sizeof(packed_BCD_pair));
+    if (unlikely(ret.digits == NULL)) {
+        ret = BCD_nan;
+        ret.orig_error = ret.error = NO_MEM;
+        return ret;
+    }
     if (tens % 2 == 0)  {
         // +--+--+    +--+--+--+
         // |23|01| -> ...|23|01|
@@ -787,6 +849,7 @@ BCD_int div_bcd_pow_10(BCD_int a, uintmax_t tens)   {
     if (unlikely(a.nan))    {
         BCD_int ret = BCD_nan;
         ret.error = SHIFT_NAN;
+        ret.orig_error = a.orig_error;
         return ret;
     }
     if (unlikely(!tens))    {
@@ -797,13 +860,17 @@ BCD_int div_bcd_pow_10(BCD_int a, uintmax_t tens)   {
     }
     BCD_int ret;
     ret.negative = a.negative;
-    ret.zero = false;
-    ret.nan = false;
-    ret.constant = false;
+    ret.zero = ret.nan = ret.constant = false;
+    ret.error = NON_ERR;
     ret.decimal_digits = a.decimal_digits - tens;
     if (tens % 2 == 0)  {
         ret.bcd_digits = a.bcd_digits - tens / 2;
         ret.digits = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * ret.bcd_digits);
+        if (unlikely(ret.digits == NULL))   {
+            ret = BCD_nan;
+            ret.orig_error = ret.error = NO_MEM;
+            return ret;
+        }
         memcpy(ret.digits, a.digits + tens / 2, ret.bcd_digits);
     }
     else    {
@@ -818,7 +885,7 @@ inline BCD_int shift_bcd_right(BCD_int a, uintmax_t tens)   {
 }
 
 inline BCD_int pow_cuint_cuint(uintmax_t x, uintmax_t y)    {
-    // this takes roughly O(xylog_100(xy)) time
+    // this takes roughly O(x * y * log_100(xy)) time
     BCD_int answer = BCD_one;
     while (y--) {
         imul_bcd_cuint(&answer, x);
@@ -827,7 +894,7 @@ inline BCD_int pow_cuint_cuint(uintmax_t x, uintmax_t y)    {
 }
 
 inline BCD_int pow_cint_cuint(intmax_t x, uintmax_t y) {
-    // this takes roughly O(xylog_100(xy)) time
+    // this takes roughly O(x * y * log_100(xy)) time
     BCD_int answer = BCD_one;
     while (y--) {
         imul_bcd_cint(&answer, x);
