@@ -3,6 +3,10 @@
 
 #include "iterator.h"
 
+#ifdef DOXYGEN
+namespace c::include::factors {
+#endif
+
 typedef struct factor_counter factor_counter;
 struct factor_counter   {
     uintmax_t target;
@@ -42,5 +46,9 @@ inline uintmax_t proper_divisor_count(uintmax_t target) {
     }
     return ret;
 }
+
+#ifdef DOXYGEN
+};
+#endif
 
 #endif

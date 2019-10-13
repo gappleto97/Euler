@@ -12,6 +12,10 @@ Find the sum of all the primes below two million.
 #include <stdio.h>
 #include "include/primes.h"
 
+#ifdef DOXYGEN
+namespace c::p0010 {
+#endif
+
 
 int main(int argc, char const *argv[])  {
     unsigned long long tmp, answer = 0;
@@ -23,3 +27,7 @@ int main(int argc, char const *argv[])  {
     printf("%llu", answer);  // this is because of a bug
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

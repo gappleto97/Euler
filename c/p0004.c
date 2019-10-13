@@ -14,6 +14,10 @@ Find the largest palindrome made from the product of two 3-digit numbers.
 
 #include "include/digits.h"
 
+#ifdef DOXYGEN
+namespace c::p0004 {
+#endif
+
 
 int main(int argc, char const *argv[])  {
     unsigned int answer = 0, i, j, a, z, prod;
@@ -39,3 +43,7 @@ int main(int argc, char const *argv[])  {
     printf("%u", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

@@ -15,6 +15,10 @@ Find the sum of the digits in the number 100!
 #include <stdio.h>
 #include "include/bcd.h"
 
+#ifdef DOXYGEN
+namespace c::p0020 {
+#endif
+
 
 int main(int argc, char const *argv[])  {
     unsigned long long answer = 0;
@@ -28,3 +32,7 @@ int main(int argc, char const *argv[])  {
     printf("%llu", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

@@ -12,6 +12,10 @@ What is the 10 001st prime number?
 #include <stdio.h>
 #include "include/primes.h"
 
+#ifdef DOXYGEN
+namespace c::p0007 {
+#endif
+
 
 int main(int argc, char const *argv[])  {
     unsigned int answer, count = 0;
@@ -26,3 +30,7 @@ int main(int argc, char const *argv[])  {
     free_prime_sieve(ps);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

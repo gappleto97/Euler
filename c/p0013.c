@@ -111,6 +111,10 @@ Work out the first ten digits of the sum of the following one-hundred 50-digit n
 #include <stdio.h>
 #include "include/bcd.h"
 
+#ifdef DOXYGEN
+namespace c::p0013 {
+#endif
+
 
 static const char numbers[100][50] = {
     "37107287533902102798797998220837590246510135740250",
@@ -230,3 +234,7 @@ int main(int argc, char const *argv[])  {
     free_BCD_int(&answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

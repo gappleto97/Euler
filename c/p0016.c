@@ -13,6 +13,10 @@ What is the sum of the digits of the number 21000?
 #include <stdio.h>
 #include "include/bcd.h"
 
+#ifdef DOXYGEN
+namespace c::p0016 {
+#endif
+
 
 int main(int argc, char const *argv[])  {
     unsigned long long answer = 0;
@@ -25,3 +29,7 @@ int main(int argc, char const *argv[])  {
     printf("%llu\n", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

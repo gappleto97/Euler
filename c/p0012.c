@@ -29,6 +29,10 @@ divisors?
 #include <stdio.h>
 #include "include/factors.h"
 
+#ifdef DOXYGEN
+namespace c::p0012 {
+#endif
+
 typedef struct triangle_iterator triangle_iterator;
 struct triangle_iterator    {
     unsigned long long current;
@@ -64,3 +68,7 @@ int main(int argc, char const *argv[])  {
     }
     return -1;
 }
+
+#ifdef DOXYGEN
+}
+#endif

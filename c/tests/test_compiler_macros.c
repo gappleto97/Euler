@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include "../include/macros.h"
 
+#ifdef DOXYGEN
+namespace c::tests::test_compiler_macros {
+#endif
+
 int main(int argc, char const *argv[]) {
     printf(
         "%d %d %d %d %d %d %d %d %d %d",
@@ -17,3 +21,7 @@ int main(int argc, char const *argv[]) {
     );
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

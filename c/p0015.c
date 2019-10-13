@@ -17,6 +17,10 @@ How many such routes are there through a 20×20 grid?
 #include <stdio.h>
 #include "include/math.h"
 
+#ifdef DOXYGEN
+namespace c::p0015 {
+#endif
+
 #define lattice_paths(height, width) (n_choose_r(height + width, height))
 
 
@@ -26,3 +30,7 @@ int main(int argc, char const *argv[])  {
     printf("%llu", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

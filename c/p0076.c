@@ -17,7 +17,7 @@ Revision 3:
 
 After testing on non-Windows systems, I found that Revision 2 royally borked it up. I reverted this, then applied an
 optimization I found earlier today. The number of solutions to a + 2b + n = 100, where a, b, n in [0, 100] is
-(100 - n) / 2 + 1. This brought runtime on TCC from ~3min -> ~1min and clang from ~6s -> ~2s. 
+(100 - n) / 2 + 1. This brought runtime on TCC from ~3min -> ~1min and clang from ~6s -> ~2s.
 
 Revision 4:
 
@@ -40,6 +40,10 @@ positive integers?
 */
 #include <stdio.h>
 #include "include/macros.h"
+
+#ifdef DOXYGEN
+namespace c::p0076 {
+#endif
 
 
 int main(int argc, char const *argv[])  {
@@ -69,3 +73,7 @@ int main(int argc, char const *argv[])  {
     printf("%u", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

@@ -14,6 +14,10 @@ Note: as 1! = 1 and 2! = 2 are not sums they are not included.
 #include "include/digits.h"
 #include "include/math.h"
 
+#ifdef DOXYGEN
+namespace c::p0034 {
+#endif
+
 int main(int argc, char const *argv[])  {
     unsigned long long answer = 0, sum;
     digit_counter dc;
@@ -31,3 +35,7 @@ int main(int argc, char const *argv[])  {
     printf("%llu", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

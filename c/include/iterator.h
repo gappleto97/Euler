@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include "macros.h"
 
+#ifdef DOXYGEN
+namespace c::include::iterator {
+#endif
+
 #define IteratorTail(return_type, struct_type) \
     return_type (*iterator_function)(struct_type *it); \
     bool exhausted : 1; \
@@ -142,5 +146,9 @@ inline counter counter1(uintmax_t stop)    {
      */
     return counter2(0, stop);
 }
+
+#ifdef DOXYGEN
+};
+#endif
 
 #endif

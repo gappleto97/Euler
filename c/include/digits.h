@@ -8,7 +8,11 @@
     #include <stdlib.h>
     #include <math.h>
 #else
-    #include "math.h"
+    #include "./math.h"
+#endif
+
+#ifdef DOXYGEN
+namespace c::include::digits {
 #endif
 
 typedef struct digit_counter digit_counter;
@@ -47,5 +51,10 @@ void free_digit_counter(digit_counter dc)   {
         free(dc.digits);
     }
 }
+
+
+#ifdef DOXYGEN
+};
+#endif
 
 #endif

@@ -16,6 +16,10 @@
     #include "./math.h"
 #endif
 
+#ifdef DOXYGEN
+namespace c::include::bcd {
+#endif
+
 EXTERN_PRINTF;
 
 /** @section types
@@ -1635,3 +1639,7 @@ inline void print_bcd_ln(const BCD_int x)   {
     print_bcd(x);
     printf("\n");
 }
+
+#ifdef DOXYGEN
+};
+#endif

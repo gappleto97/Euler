@@ -1,7 +1,11 @@
 #ifndef EULER_MATH_H
 #define EULER_MATH_H
 
-#include "macros.h"
+#ifdef DOXYGEN
+namespace c::include::math {
+#endif
+
+#include "./macros.h"
 
 #if !PCC_COMPILER
     #include <stdlib.h>
@@ -117,6 +121,10 @@ uintmax_t n_choose_r(unsigned int n, unsigned int r)    {
         }
         return ret + 1;
     }
+#endif
+
+#ifdef DOXYGEN
+};
 #endif
 
 #endif

@@ -3,6 +3,10 @@
 
 #include "iterator.h"
 
+#ifdef DOXYGEN
+namespace c::include::fibonacci {
+#endif
+
 typedef struct fibonacci fibonacci;
 struct fibonacci    {
     uintmax_t a;
@@ -36,5 +40,9 @@ fibonacci fibonacci0();
 inline fibonacci fibonacci0()   {
     return fibonacci1(-1);
 }
+
+#ifdef DOXYGEN
+};
+#endif
 
 #endif

@@ -2,6 +2,10 @@
 #include <inttypes.h>
 #include "../include/primes.h"
 
+#ifdef DOXYGEN
+namespace c::tests::test_is_prime {
+#endif
+
 #ifndef MAX_PRIME
 #define MAX_PRIME 1000
 #endif
@@ -21,3 +25,7 @@ int main(int argc, char const *argv[]) {
     }
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

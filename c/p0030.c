@@ -18,6 +18,10 @@ Find the sum of all the numbers that can be written as the sum of fifth powers o
 #include <stdio.h>
 #include "include/digits.h"
 
+#ifdef DOXYGEN
+namespace c::p0030 {
+#endif
+
 
 int main(int argc, char const *argv[])  {
     unsigned long long answer = 0, sum, tmp;
@@ -37,3 +41,7 @@ int main(int argc, char const *argv[])  {
     printf("%llu", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

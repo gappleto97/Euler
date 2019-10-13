@@ -8,10 +8,14 @@
     #include <stdlib.h>
     #include <math.h>
 #else
-    #include "math.h"
+    #include "./math.h"
 #endif
 
 #include "iterator.h"
+
+#ifdef DOXYGEN
+namespace c::include::primes {
+#endif
 
 typedef struct prime_sieve prime_sieve;
 typedef struct prime_counter prime_counter;
@@ -346,5 +350,9 @@ inline bool is_prime(uintmax_t n)  {
      */
     return n && n != 1 && !is_composite(n);
 }
+
+#ifdef DOXYGEN
+};
+#endif
 
 #endif

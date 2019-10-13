@@ -16,6 +16,10 @@ What is the smallest positive number that is evenly divisible by all of the numb
 #include "include/macros.h"
 #include "include/primes.h"
 
+#ifdef DOXYGEN
+namespace c::p0005 {
+#endif
+
 int main(int argc, char const *argv[])  {
     unsigned long long answer = 1;
     unsigned char factor_tracker[20] = {0}, local_factor_tracker[20] = {0};
@@ -39,3 +43,7 @@ int main(int argc, char const *argv[])  {
     printf("%llu", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif
