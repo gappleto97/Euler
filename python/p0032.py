@@ -18,20 +18,20 @@ can be written as a 1 through 9 pandigital.
 HINT: Some products can be obtained in more than one way so be sure to only
 include it once in your sum.
 """
-from itertools import chain
+import itertools
 
-from p0021 import proper_divisors
-from p0074 import digits
+import p0021
+import p0074
 
 
 def main() -> int:
     answer = 0
     list_of_digits = list(range(1, 10))
     for product in range(1000, 10**4):
-        for factor in proper_divisors(product):
+        for factor in p0021.proper_divisors(product):
             multiplicand = product // factor
             covered_digits = tuple(
-                chain(digits(factor), digits(multiplicand), digits(product))
+                itertools.chain(p0074.digits(factor), p0074.digits(multiplicand), p0074.digits(product))
             )
             if len(covered_digits) != 9:
                 continue

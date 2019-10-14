@@ -24,24 +24,24 @@ Let d1 be the 1st digit, d2 be the 2nd digit, and so on. In this way, we note th
 
 Find the sum of all 0 to 9 pandigital numbers with this property.
 """
-from itertools import islice, permutations
+import itertools
 
-from p0008 import groupwise
-from p0055 import from_digits
+import p0008
+import p0055
 
 
 def main():
     answer = 0
     divisibility = (3, 5, 7, 11, 13, 17)
-    for d in permutations(range(10), 10):
+    for d in itertools.permutations(range(10), 10):
         if d[3] % 2:
             continue
-        for group, divisor in zip(islice(groupwise(d, 3), 2, 8), divisibility):
+        for group, divisor in zip(itertools.islice(p0008.groupwise(d, 3), 2, 8), divisibility):
             a, b, c = group
             if (a * 100 + b * 10 + c) % divisor:
                 break
         else:
-            answer += from_digits(d)
+            answer += p0055.from_digits(d)
     return answer
 
 

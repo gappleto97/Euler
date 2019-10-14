@@ -21,12 +21,12 @@ By listing the set of reduced proper fractions for d ≤ 1,000,000 in ascending
 order of size, find the numerator of the fraction immediately to the left of
 3/7.
 """
-from fractions import Fraction
+import fractions
 
 
 def main() -> int:
     return max(
-        Fraction(x, y)
+        fractions.Fraction(x, y)
         for y in range(1, 1_000_000)
         for x in range((y - 1) * 3 // 7, y * 3 // 7)
     ).numerator

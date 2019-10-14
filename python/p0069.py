@@ -25,12 +25,12 @@ It can be seen that n=6 produces a maximum n/φ(n) for n ≤ 10.
 
 Find the value of n ≤ 1,000,000 for which n/φ(n) is a maximum.
 """
-from p0003 import primes
+import p0003
 
 
 def main() -> int:
     answer = 1
-    for p in primes():
+    for p in p0003.primes():
         new = answer * p
         if new <= 1_000_000:
             answer = new

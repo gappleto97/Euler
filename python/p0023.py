@@ -24,23 +24,23 @@ this limit.
 Find the sum of all the positive integers which cannot be written as the sum of
 two abundant numbers.
 """
-from itertools import combinations_with_replacement, filterfalse
+import itertools
 from typing import Iterator
 
-from p0021 import proper_divisors
+import p0021
 
 
 def abundants() -> Iterator[int]:
     for x in range(12, 28112):
-        if sum(proper_divisors(x)) > x:
+        if sum(p0021.proper_divisors(x)) > x:
             yield x
 
 
 def main() -> int:
     abundant_sums = set((24, ))
-    for x, y in combinations_with_replacement(abundants(), 2):
+    for x, y in itertools.combinations_with_replacement(abundants(), 2):
         abundant_sums.add(x + y)
-    return sum(filterfalse(abundant_sums.__contains__, range(1, 28124)))
+    return sum(itertools.filterfalse(abundant_sums.__contains__, range(1, 28124)))
 
 
 if __name__ == '__main__':

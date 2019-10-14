@@ -22,22 +22,21 @@ The first three consecutive numbers to have three distinct prime factors are:
 Find the first four consecutive integers to have four distinct prime factors
 each. What is the first of these numbers?
 """
-from functools import lru_cache
-from itertools import count
+import functools
+import itertools
 from typing import Tuple
 
-from p0007 import is_prime
-from p0008 import groupwise
+import p0007
+import p0008
 
 
-@lru_cache()
+@functools.lru_cache()
 def cached_is_prime(args: Tuple[int, int, bool]) -> bool:
-    return is_prime(*args)
+    return p0007.is_prime(*args)
 
 
 def main() -> int:
-    for group in groupwise(count(2), 4):
-        # print(group[0])
+    for group in p0008.groupwise(itertools.count(2), 4):
         if all(cached_is_prime((x, 4, True)) for x in group):
             return group[0]
     return -1

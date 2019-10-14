@@ -12,7 +12,7 @@ number then we shall call the word a triangle word.
 Using words.txt (right click and 'Save Link/Target As...'), a 16K text file containing nearly two-thousand common
 English words, how many are triangle words?
 """
-from pathlib import Path
+import pathlib
 from typing import Set
 
 
@@ -36,7 +36,7 @@ def is_in_triangle(n: int) -> bool:
 
 def main():
     answer = 0
-    with Path(__file__).parent.parent.joinpath('_data', 'p0042_words.txt').open('rb') as f:
+    with pathlib.Path(__file__).parent.parent.joinpath('_data', 'p0042_words.txt').open('rb') as f:
         words = f.read().replace(b'"', b'').split(b',')
     for word in words:
         value = sum(x - 64 for x in word)

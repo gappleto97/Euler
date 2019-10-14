@@ -11,10 +11,10 @@ formed. Interestingly with the set {2,5,47,89,631}, all of the elements belongin
 
 How many distinct sets containing each of the digits one through nine exactly once contain only prime elements?
 """
-from itertools import takewhile
-from math import ceil, log10
+import itertools
+import math
 
-from p0003 import primes
+import p0003
 
 all_digits = set("123456789")
 
@@ -52,26 +52,26 @@ def main() -> int:
             return True  # if this set is pandigital, skip nested loops
         return False
 
-    cached_primes = tuple(primes(98765432))  # should be largest eligible number
-    for a in takewhile((10**5).__gt__, cached_primes):
-        a_digits = ceil(log10(a))
-        for b in takewhile((10**(9 - a_digits)).__gt__, cached_primes):
+    cached_primes = tuple(p0003.primes(98765432))  # should be largest eligible number
+    for a in itertools.takewhile((10**5).__gt__, cached_primes):
+        a_digits = math.ceil(math.log10(a))
+        for b in itertools.takewhile((10**(9 - a_digits)).__gt__, cached_primes):
             if check(a, b):
                 continue
-            b_digits = a_digits + ceil(log10(b))
-            for c in takewhile((10**(9 - b_digits)).__gt__, cached_primes):
+            b_digits = a_digits + math.ceil(math.log10(b))
+            for c in itertools.takewhile((10**(9 - b_digits)).__gt__, cached_primes):
                 if check(a, b, c):
                     continue
-                c_digits = b_digits + ceil(log10(c))
-                for d in takewhile((10**(9 - c_digits)).__gt__, cached_primes):
+                c_digits = b_digits + math.ceil(math.log10(c))
+                for d in itertools.takewhile((10**(9 - c_digits)).__gt__, cached_primes):
                     if check(a, b, c, d):
                         continue
-                    d_digits = c_digits + ceil(log10(d))
-                    for e in takewhile((10**(9 - d_digits)).__gt__, cached_primes):
+                    d_digits = c_digits + math.ceil(math.log10(d))
+                    for e in itertools.takewhile((10**(9 - d_digits)).__gt__, cached_primes):
                         if check(a, b, c, d, e):
                             continue
-                        e_digits = d_digits + ceil(log10(e))
-                        for f in takewhile((10**(9 - e_digits)).__gt__, cached_primes):
+                        e_digits = d_digits + math.ceil(math.log10(e))
+                        for f in itertools.takewhile((10**(9 - e_digits)).__gt__, cached_primes):
                             if check(a, b, c, d, e, f):
                                 continue
     return answer

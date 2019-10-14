@@ -20,6 +20,8 @@ All files share a common prefix with their problem number. Several of the proble
     * p0074 for a generator
 * p0055 for retrieving a number from its digits
 
+As a style note, to preserve Doxygen namespacing I have imported whole modules rather than individual pieces of modules, as would normally be my preference. Not doing this caused problems with Doxygen's namespace and call graph features.
+
 ## Makefile
 
 There are three main recipes in this Makefile

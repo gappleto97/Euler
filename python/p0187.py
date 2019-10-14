@@ -22,18 +22,18 @@ distinct, prime factors: 4, 6, 9, 10, 14, 15, 21, 22, 25, 26.
 How many composite integers, n < 10**8, have precisely two, not necessarily
 distinct, prime factors?
 """
-from itertools import takewhile
+import itertools
 
-from p0003 import primes
+import p0003
 
 
 def main() -> int:
     ten_8 = 10**8
-    cached_primes = tuple(primes(ten_8 // 2 + 1))
+    cached_primes = tuple(p0003.primes(ten_8 // 2 + 1))
     seen = {
         x * y
         for y in cached_primes
-        for x in takewhile((ten_8 // y).__ge__, cached_primes)
+        for x in itertools.takewhile((ten_8 // y).__ge__, cached_primes)
     }
     return len(seen)
 

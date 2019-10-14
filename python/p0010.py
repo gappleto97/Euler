@@ -22,13 +22,13 @@ The sum of the primes below 10 is 2 + 3 + 5 + 7 = 17.
 
 Find the sum of all the primes below two million.
 """
-from itertools import takewhile
+import itertools
 
-from p0003 import primes
+import p0003
 
 
 def main() -> int:
-    return sum(takewhile((2_000_000).__gt__, primes()))
+    return sum(itertools.takewhile((2_000_000).__gt__, p0003.primes()))
 
 
 if __name__ == '__main__':

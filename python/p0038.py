@@ -21,17 +21,17 @@ The same can be achieved by starting with 9 and multiplying by 1, 2, 3, 4, and
 What is the largest 1 to 9 pandigital 9-digit number that can be formed as the
 concatenated product of an integer with (1,2, ... , n) where n > 1?
 """
-from functools import reduce
+import functools
 from typing import Tuple
 
-from p0074 import digits
+import p0074
 
 
 def main() -> int:
     answer: Tuple[int, ...] = (9, 1, 8, 2, 7, 3, 6, 4, 5)
     list_of_digits = list(range(1, 10))
     for num in range(1, 10000):
-        cur_digits = tuple(digits(num))[::-1]
+        cur_digits = tuple(p0074.digits(num))[::-1]
         for x in range(2, 9):
             if len(cur_digits) > 9:
                 break
@@ -42,8 +42,8 @@ def main() -> int:
                     print(num, cur_digits)
                     answer = cur_digits
                 break
-            cur_digits = cur_digits + tuple(digits(x * num))[::-1]
-    return reduce(lambda x, y: x * 10 + y, answer)
+            cur_digits = cur_digits + tuple(p0074.digits(x * num))[::-1]
+    return functools.reduce(lambda x, y: x * 10 + y, answer)
 
 
 if __name__ == '__main__':

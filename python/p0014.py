@@ -26,10 +26,10 @@ Which starting number, under one million, produces the longest chain?
 
 NOTE: Once the chain starts the terms are allowed to go above one million.
 """
-from functools import lru_cache
+import functools
 
 
-@lru_cache(maxsize=1 << 18)
+@functools.lru_cache(maxsize=1 << 18)
 def collatz_len(n: int) -> int:
     if n == 1:
         return 0

@@ -20,14 +20,14 @@ at 1 or 89.
 
 How many starting numbers below ten million will arrive at 89?
 """
-from functools import lru_cache
+import functools
 
-from p0074 import digits
+import p0074
 
 
-@lru_cache(maxsize=None)
+@functools.lru_cache(maxsize=None)
 def f(n: int) -> int:
-    return sum(x**2 for x in digits(n))
+    return sum(x**2 for x in p0074.digits(n))
 
 
 def main() -> int:

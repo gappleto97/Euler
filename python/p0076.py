@@ -38,13 +38,13 @@ It is possible to write five as a sum in exactly six different ways:
 How many different ways can one hundred be written as a sum of at least two
 positive integers?
 """
-from collections import defaultdict
+import collections
 from typing import DefaultDict
 
 
 def main() -> int:
     answer = 0
-    counts: DefaultDict[int, int] = defaultdict(int)
+    counts: DefaultDict[int, int] = collections.defaultdict(int)
     total = counts[2] = 100
     while True:
         counts[2] += 2

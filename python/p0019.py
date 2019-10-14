@@ -21,15 +21,15 @@ for yourself.
 How many Sundays fell on the first of the month during the twentieth century
 (1 Jan 1901 to 31 Dec 2000)?
 """
-from datetime import date
+import datetime
 
 
 def monthly_iterator(years, months=range(1, 13), day=1):
-    for x in range(1901, 2001):
-        for y in range(1, 13):
-            day = date(x, y, 1)
-            if day.weekday() == 6:
-                yield day
+    for x in years:
+        for y in months:
+            date = datetime.date(x, y, day)
+            if date.weekday() == 6:
+                yield date
 
 
 def main() -> int:

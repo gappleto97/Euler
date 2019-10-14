@@ -15,15 +15,15 @@ It is possible to write ten as the sum of primes in exactly five different ways:
 
 What is the first value which can be written as the sum of primes in over five thousand different ways?
 """
-from itertools import count
+import itertools
 from typing import List, Tuple
 
-from p0003 import primes
+import p0003
 
 
 def prime_summations(n: int) -> int:
     answer = 0
-    cached_primes: Tuple[int, ...] = tuple(primes(n))
+    cached_primes: Tuple[int, ...] = tuple(p0003.primes(n))
     num_primes = len(cached_primes)
     max_idx = num_primes - 1
     counts: List[int] = [0] * num_primes
@@ -49,7 +49,7 @@ def prime_summations(n: int) -> int:
 
 
 def main() -> int:
-    for x in count(11):
+    for x in itertools.count(11):
         if prime_summations(x) > 5_000:
             return x
     return -1

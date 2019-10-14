@@ -24,7 +24,7 @@ that can be expressed in such a way:
 How many numbers below fifty million can be expressed as the sum of a prime
 square, prime cube, and prime fourth power?
 """
-from p0003 import primes
+import p0003
 
 
 def main() -> int:
@@ -32,11 +32,11 @@ def main() -> int:
     root2_50M = int(50_000_000 ** (1/2)) + 1
     root3_50M = int(50_000_000 ** (1/3)) + 1
     root4_50M = int(50_000_000 ** (1/4)) + 1
-    for x in primes(root2_50M):
+    for x in p0003.primes(root2_50M):
         x2 = x * x
-        for y in primes(root3_50M):
+        for y in p0003.primes(root3_50M):
             y3 = y * y * y
-            for z in primes(root4_50M):
+            for z in p0003.primes(root4_50M):
                 total = x2 + y3 + z * z * z * z
                 if total < 50_000_000:
                     seen.add(total)

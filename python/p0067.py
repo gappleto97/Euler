@@ -24,17 +24,17 @@ billion years to check them all. There is an efficient algorithm to solve it. ;o
 
 
 """
-from pathlib import Path
+import pathlib
 
-from p0018 import reduce_triangle
+import p0018
 
 
 def main():
     rows = []
-    with Path(__file__).parent.parent.joinpath("_data", "p0067_triangle.txt").open("r") as f:
+    with pathlib.Path(__file__).parent.parent.joinpath("_data", "p0067_triangle.txt").open("r") as f:
         for line in f.readlines():
             rows.append([int(x) for x in line.split()])
-    return reduce_triangle(rows)
+    return p0018.reduce_triangle(rows)
 
 
 if __name__ == '__main__':

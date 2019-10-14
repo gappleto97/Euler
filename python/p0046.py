@@ -23,21 +23,21 @@ It turns out that the conjecture was false.
 
 What is the smallest odd composite that cannot be written as the sum of a prime and twice a square?
 """
-from itertools import count, takewhile
-from math import ceil, sqrt
+import itertools
+import math
 
-from p0003 import primes
-from p0007 import is_prime
+import p0003
+import p0007
 
 
 def main():
-    cached_primes = tuple(primes(6000))
-    for goal in count(35, 2):
-        if is_prime(goal):
+    cached_primes = tuple(p0003.primes(6000))
+    for goal in itertools.count(35, 2):
+        if p0007.is_prime(goal):
             continue
-        for p in takewhile(goal.__gt__, cached_primes):
+        for p in itertools.takewhile(goal.__gt__, cached_primes):
             done = False
-            for x in range(1, ceil(sqrt((goal - p) / 2)) + 1):
+            for x in range(1, math.ceil(math.sqrt((goal - p) / 2)) + 1):
                 if p + 2 * x * x == goal:
                     done = True
                     break

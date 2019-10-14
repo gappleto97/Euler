@@ -15,24 +15,24 @@ right and right to left.
 
 NOTE: 2, 3, 5, and 7 are not considered to be truncatable primes.
 """
-from p0003 import primes
-from p0007 import is_prime
+import p0003
+import p0007
 
 
 def main() -> int:
     answer = count = 0
-    for p in primes():
+    for p in p0003.primes():
         if count == 11:
             break
         elif p < 10:
             continue
         else:
             right = left = p
-            while is_prime(right):
+            while p0007.is_prime(right):
                 right = right // 10
             if right != 0:
                 continue
-            while is_prime(left):
+            while p0007.is_prime(left):
                 x = 10
                 while x < left:
                     x *= 10

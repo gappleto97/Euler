@@ -29,12 +29,12 @@ The 12th term, F12, is the first term to contain three digits.
 What is the index of the first term in the Fibonacci sequence to contain 1000
 digits?
 """
-from p0002 import fib
+import p0002
 
 
 def main() -> int:
     check = 10**999
-    for idx, x in enumerate(fib(), 1):
+    for idx, x in enumerate(p0002.fib(), 1):
         if x > check:
             return idx
     return -1

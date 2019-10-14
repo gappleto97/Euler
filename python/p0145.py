@@ -24,7 +24,7 @@ There are 120 reversible numbers below one-thousand.
 
 How many reversible numbers are there below one-billion (10^9)?
 """
-from itertools import chain
+import itertools
 from typing import Set
 
 
@@ -32,7 +32,7 @@ def main() -> int:
     seen: Set[int] = set()
     seen_update = seen.update
     odd_digits = {"1", "3", "5", "7", "9"}
-    for x in chain.from_iterable(range(x, 10**8 // 2, 10) for x in (2, 4, 5, 6, 7, 8)):
+    for x in itertools.chain.from_iterable(range(x, 10**8 // 2, 10) for x in (2, 4, 5, 6, 7, 8)):
         if x in seen:
             continue
         inverse = int(repr(x)[::-1])

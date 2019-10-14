@@ -15,11 +15,11 @@ lexicographic permutations of 0, 1 and 2 are:
 What is the millionth lexicographic permutation of the digits 0, 1, 2, 3, 4,
 5, 6, 7, 8 and 9?
 """
-from itertools import permutations
+import itertools
 
 
 def main() -> int:
-    for idx, x in enumerate(permutations(range(10))):
+    for idx, x in enumerate(itertools.permutations(range(10))):
         if idx == 999999:
             return int("".join(repr(i) for i in x))
     return -1

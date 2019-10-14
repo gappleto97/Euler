@@ -23,7 +23,7 @@ It can be seen that there are 3 fractions between 1/3 and 1/2.
 How many fractions lie between 1/3 and 1/2 in the sorted set of reduced proper
 fractions for d ≤ 12,000?
 """
-from fractions import Fraction
+import fractions
 from typing import Set, Tuple
 
 
@@ -31,7 +31,7 @@ def main() -> int:
     seen: Set[Tuple[int, int]] = set()
     for x in range(2, 12001):
         for y in range(x // 3 + 1, (x + 1) // 2):
-            f = Fraction(y, x)
+            f = fractions.Fraction(y, x)
             seen.add((f.numerator, f.denominator))
     return len(seen)
 
