@@ -25,8 +25,8 @@ int main(int argc, char const *argv[])  {
     BCD_int factorial = new_BCD_int1(100);
     ifactorial_bcd(&factorial);
     for (size_t i = 0; i < factorial.bcd_digits; i++)   {
-        answer += factorial.digits[i] & 0x0F;
-        answer += factorial.digits[i] >> 4;
+        answer += factorial.data[i] & 0x0F;
+        answer += factorial.data[i] >> 4;
     }
     free_BCD_int(&factorial);
     printf("%llu", answer);

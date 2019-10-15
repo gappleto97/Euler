@@ -22,8 +22,8 @@ int main(int argc, char const *argv[])  {
     unsigned long long answer = 0;
     BCD_int power = pow_cuint_cuint(256, 125);
     for (size_t i = 0; i < power.bcd_digits; i++)   {
-        answer += power.digits[i] & 0x0F;
-        answer += power.digits[i] >> 4;
+        answer += power.data[i] & 0x0F;
+        answer += power.data[i] >> 4;
     }
     free_BCD_int(&power);
     printf("%llu\n", answer);

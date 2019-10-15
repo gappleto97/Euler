@@ -24,7 +24,7 @@ NOTE: Once the chain starts the terms are allowed to go above one million.
 #include "include/macros.h"
 
 #ifdef DOXYGEN
-namespace c::p001 {
+namespace c::p0014 {
 #endif
 
 #define CACHE_SIZE 1000000
