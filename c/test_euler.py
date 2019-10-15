@@ -74,7 +74,7 @@ except Exception:
     _parsed_NO_OPTIONAL_TESTS = _raw_NO_OPTIONAL_TESTS
 
 if _parsed_NO_SLOW and _parsed_ONLY_SLOW:
-    warn("Test suite told to ignore slow tests AND run only slow tests. Ignoring conflicing options")
+    warn("Test suite told to ignore slow tests AND run only slow tests. Ignoring conflicting options")
 
 # if in Termux, default to NO_SLOW, but allow users to explicitly override that decision
 NO_SLOW = ((IN_TERMUX and _parsed_NO_SLOW is None) or _parsed_NO_SLOW) and not _parsed_ONLY_SLOW
@@ -127,7 +127,7 @@ COMPILER_LEN = len(max(compilers, key=len))  # make sure compiler fixtures are e
 BUILD_FOLDER.mkdir(parents=True, exist_ok=True)
 CL_NO_64 = False
 if 'CL' in compilers:
-    OBJ_FOLDER = BUILD_FOLDER.joinpath('objs')
+    OBJ_FOLDER = BUILD_FOLDER.joinpath('objects')
     OBJ_FOLDER.mkdir(exist_ok=True)
     _test_file = str(C_FOLDER.joinpath('assertions', 'x64_assert.c'))
     _test_exe = str(BUILD_FOLDER.joinpath('test_cl_64_support.out'))
@@ -152,16 +152,16 @@ SOURCE_TEMPLATE = "{}{}p{{:0>4}}.c".format(C_FOLDER, sep)
 EXE_TEMPLATE = "{}{}p{{:0>4}}.{{}}.{}".format(BUILD_FOLDER, sep, EXE_EXT)
 # include sep in the recipe so that Windows won't complain
 
-GCC_TEMPLATE = "{} {{}} -O2 -lm -Wall -Werror -std=c11 -march=native -flto -fwhole-program -o {{}}"
-CLANG_TEMPLATE = "{} {{}} -O2 {} {} -Wall -Werror -std=c11 {} -o {{}}"
+GCC_TEMPLATE = "{} {{}} -O3 -lm -Wall -Werror -std=c11 -march=native -flto -fwhole-program -o {{}}"
+CLANG_TEMPLATE = "{} {{}} -O3 {} {} -Wall -Werror -std=c11 {} -o {{}}"
 
 templates = {
     'GCC': GCC_TEMPLATE.format(GCC_BINARY),
     'CLANG': CLANG_TEMPLATE.format('clang', CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=0'),
-    'CL': "cl -Fe:{{1}} -Fo{}\\ -O2 -GL -GF -GW -Brepro -TC {{0}}".format(BUILD_FOLDER.joinpath('objs')),
+    'CL': "cl -Fe:{{1}} -Fo{}\\ -O3 -GL -GF -GW -Brepro -TC {{0}}".format(BUILD_FOLDER.joinpath('objects')),
     'TCC': "tcc -lm -Wall -Werror -o {1} {0}",
     'ICC': GCC_TEMPLATE.format('icc'),
-    'PCC': "pcc -O2 -DNO_USER_WARNINGS -Wall -Werror -o {1} {0}",
+    'PCC': "pcc -O3 -DNO_USER_WARNINGS -Wall -Werror -o {1} {0}",
     'AOCC': CLANG_TEMPLATE.format(AOCC_BINARY, CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=1'),
 }
 
@@ -194,10 +194,10 @@ def c_file(request):  # type: ignore
 
 @mark.skipif('NO_OPTIONAL_TESTS')
 def test_compiler_macros(compiler):
-    exename = EXE_TEMPLATE.format("test_compiler_macros", compiler)
+    exe_name = EXE_TEMPLATE.format("test_compiler_macros", compiler)
     test_path = C_FOLDER.joinpath("tests", "test_compiler_macros.c")
-    check_call(templates[compiler].format(test_path, exename).split())
-    buff = check_output([exename])
+    check_call(templates[compiler].format(test_path, exe_name).split())
+    buff = check_output([exe_name])
     flags = [bool(int(x)) for x in buff.split()]
     expect_32 = (compiler == 'GCC' and GCC_NO_64) or (compiler == 'CL' and CL_NO_64)
     assert flags[0] == (compiler == "CL")
@@ -214,15 +214,15 @@ def test_compiler_macros(compiler):
 
 @mark.skipif('NO_OPTIONAL_TESTS')
 def test_deterministic_build(c_file, compiler):
-    exename1 = EXE_TEMPLATE.format("dbuild{}".format(uuid4()), compiler)
-    exename2 = EXE_TEMPLATE.format("dbuild{}".format(uuid4()), compiler)
+    exe_name1 = EXE_TEMPLATE.format("deterministic-build-{}".format(uuid4()), compiler)
+    exe_name2 = EXE_TEMPLATE.format("deterministic-build-{}".format(uuid4()), compiler)
     environ['SOURCE_DATE_EPOCH'] = '1'
     environ['ZERO_AR_DATE'] = 'true'
-    check_call(templates[compiler].format(c_file, exename1).split())
+    check_call(templates[compiler].format(c_file, exe_name1).split())
     sleep(2)
-    check_call(templates[compiler].format(c_file, exename2).split())
+    check_call(templates[compiler].format(c_file, exe_name2).split())
     try:
-        with open(exename1, "rb") as f, open(exename2, "rb") as g:
+        with open(exe_name1, "rb") as f, open(exe_name2, "rb") as g:
             assert f.read() == g.read()
     except AssertionError:
         if IN_WINDOWS and compiler != 'CL':  # mingw gcc doesn't seem to make reproducible builds
@@ -234,21 +234,22 @@ def test_deterministic_build(c_file, compiler):
 
 @mark.skipif('NO_OPTIONAL_TESTS or ONLY_SLOW')
 def test_is_prime(benchmark, compiler):
-    from p0007 import is_prime, prime_factors, primes
+    import p0003
+    import p0007
     MAX_PRIME = 1_000_000
-    exename = EXE_TEMPLATE.format("test_is_prime", compiler)
+    exe_name = EXE_TEMPLATE.format("test_is_prime", compiler)
     test_path = C_FOLDER.joinpath("tests", "test_is_prime.c")
-    args = templates[compiler].format(test_path, exename) + " -DMAX_PRIME={}".format(MAX_PRIME)
+    args = templates[compiler].format(test_path, exe_name) + " -DMAX_PRIME={}".format(MAX_PRIME)
     check_call(args.split())
     with TemporaryFile('wb+') as f:
-        run_test = partial(check_call, [exename], stdout=f)
+        run_test = partial(check_call, [exe_name], stdout=f)
         benchmark.pedantic(run_test, iterations=1, rounds=1)
-        prime_cache = tuple(primes(MAX_PRIME))
+        prime_cache = tuple(p0003.primes(MAX_PRIME))
         for line in f.readlines():
             num, prime, composite, idx = (int(x) for x in line.split())
-            assert bool(prime) == bool(is_prime(num))
-            assert bool(composite) == (not is_prime(num))
-            assert composite == 0 or composite == next(iter(prime_factors(num)))
+            assert bool(prime) == bool(p0007.is_prime(num))
+            assert bool(composite) == (not p0007.is_prime(num))
+            assert composite == 0 or composite == next(iter(p0003.prime_factors(num)))
             assert idx == -1 or prime_cache[idx] == num
 
     # sometimes benchmark disables itself, so check for .stats
@@ -260,9 +261,9 @@ def test_problem(benchmark, key, compiler):
     if (NO_SLOW and key in known_slow) or (ONLY_SLOW and key not in known_slow):
         skip()
     filename = SOURCE_TEMPLATE.format(key)
-    exename = EXE_TEMPLATE.format(key, compiler)  # need to have both to keep name unique
-    check_call(templates[compiler].format(filename, exename).split())
-    run_test = partial(check_output, [exename])
+    exe_name = EXE_TEMPLATE.format(key, compiler)  # need to have both to keep name unique
+    check_call(templates[compiler].format(filename, exe_name).split())
+    run_test = partial(check_output, [exe_name])
 
     if key in known_slow:
         answer = benchmark.pedantic(run_test, iterations=1, rounds=1)
