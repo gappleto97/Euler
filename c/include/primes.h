@@ -18,7 +18,11 @@ namespace c::include::primes {
 #endif
 
 typedef struct prime_sieve prime_sieve;
+
 typedef struct prime_counter prime_counter;
+/**
+ * @implements c::include::iterator::Iterator
+ */
 struct prime_counter {
     /**
      * The reference struct for all iterators in this project
@@ -34,7 +38,7 @@ struct prime_counter {
     size_t idx;
     uintmax_t stop;
     prime_sieve *ps;
-    IteratorTail(uintmax_t, prime_counter);
+    IteratorTail(uintmax_t, prime_counter)
 };
 
 static uintmax_t *prime_cache;
@@ -126,8 +130,7 @@ prime_counter prime_counter1(uintmax_t stop)  {
      *
      * See prime_counter
      */
-    prime_counter ret;
-    IteratorInitHead(ret, advance_prime_counter);
+    prime_counter ret = IteratorInitHead(advance_prime_counter);
     ret.idx = 0;
     ret.stop = stop;
     ret.ps = NULL;
@@ -144,6 +147,10 @@ inline prime_counter prime_counter0()   {
     return prime_counter1(-1);
 }
 
+
+/**
+ * @implements c::include::iterator::Iterator
+ */
 struct prime_sieve {
     /**
      * The iterator that implements a modified sieve of eratosthenes
@@ -166,7 +173,7 @@ struct prime_sieve {
     uintmax_t prime_squared;
     uintmax_t candidate;
     prime_counter source;
-    IteratorTail(uintmax_t, prime_sieve);
+    IteratorTail(uintmax_t, prime_sieve)
 };
 
 uintmax_t advance_prime_sieve(prime_sieve *ps) {
@@ -234,8 +241,7 @@ prime_sieve prime_sieve0()  {
      *
      * See prime_sieve
      */
-    prime_sieve ret;
-    IteratorInitHead(ret, advance_prime_sieve);
+    prime_sieve ret = IteratorInitHead(advance_prime_sieve);
     ret.sieve = NULL;
     ret.sieve_len = 0;
     ret.prime = 3;
@@ -262,7 +268,11 @@ void free_prime_counter(prime_counter pc)   {
     }
 }
 
+
 typedef struct prime_factor_counter prime_factor_counter;
+/**
+ * @implements c::include::iterator::Iterator
+ */
 struct prime_factor_counter {
     /**
      * The iterator that allows you to prime factorize a number
@@ -279,7 +289,7 @@ struct prime_factor_counter {
     uintmax_t target;
     uintmax_t current;
     prime_counter pc;
-    IteratorTail(uintmax_t, prime_factor_counter);
+    IteratorTail(uintmax_t, prime_factor_counter)
 };
 
 uintmax_t advance_prime_factor_counter(prime_factor_counter *pfc)  {
@@ -310,8 +320,7 @@ prime_factor_counter prime_factors(uintmax_t n)    {
      *
      * See prime_factor_counter
      */
-    prime_factor_counter ret;
-    IteratorInitHead(ret, advance_prime_factor_counter);
+    prime_factor_counter ret = IteratorInitHead(advance_prime_factor_counter);
     ret.current = 2;
     ret.target = n;
     ret.pc = prime_counter0();

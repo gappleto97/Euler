@@ -118,7 +118,7 @@
 
 // compiler workaround section
 
-#if PCC_COMPILER
+#if (PCC_COMPILER && !DOXYGEN)
     #ifndef NO_USER_WARNINGS
         #warning static is being redefined to '' because you are on PCC. \
         This is happening because PCC does not allow reproducible builds with the static keyword used globally. \
