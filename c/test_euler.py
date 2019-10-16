@@ -158,7 +158,7 @@ CLANG_TEMPLATE = "{} {{}} -O3 {} {} -Wall -Werror -std=c11 {} -o {{}}"
 templates = {
     'GCC': GCC_TEMPLATE.format(GCC_BINARY),
     'CLANG': CLANG_TEMPLATE.format('clang', CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=0'),
-    'CL': "cl -Fe:{{1}} -Fo{}\\ -O3 -GL -GF -GW -Brepro -TC {{0}}".format(BUILD_FOLDER.joinpath('objects')),
+    'CL': "cl -Fe:{{1}} -Fo{}\\ -O2 -GL -GF -GW -Brepro -TC {{0}}".format(BUILD_FOLDER.joinpath('objects')),
     'TCC': "tcc -lm -Wall -Werror -o {1} {0}",
     'ICC': GCC_TEMPLATE.format('icc'),
     'PCC': "pcc -O3 -DNO_USER_WARNINGS -Wall -Werror -o {1} {0}",
