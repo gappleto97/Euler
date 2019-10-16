@@ -124,6 +124,12 @@
         This is happening because PCC does not allow reproducible builds with the static keyword used globally. \
         Make sure this does not have side effects, or undefine/redefine static per-usage.
     #endif
+    /**
+     * @brief ON PCC ONLY static is stripped from file-level variables.
+     *
+     * This is because PCC cannot make reproducible builds if static data is defined at a global level. In other
+     * compilers it is typically safer to have such data be static, so it is left in for those.
+     */
     #define static
 #endif
 
@@ -193,15 +199,54 @@
  */
 #define PCC_SQRT_ACCURACY 8
 
+/**
+ * @brief This macro denotes the number that, when factorialed, can be stored in a 64-bit unsigned integer
+ */
 #define MAX_FACTORIAL_64 20
+
+/**
+ * @brief This macro denotes the number that, when factorialed, can be stored in a 64-bit unsigned integer
+ */
 #define MAX_FACTORIAL_128 34
+
+/**
+ * @brief This macro denotes the largest power of 10 that can be stored in a 16-bit unsigned integer
+ */
 #define MAX_POW_10_16 10000U
+
+/**
+ * @brief This macro defines the power of MAX_POW_10_16. In other words, \f$\10^{\texttt{POW_OF_MAX_POW_10_16}} = \texttt{MAX_POW_10_16}\f$
+ */
 #define POW_OF_MAX_POW_10_16 4
+
+/**
+ * @brief This macro denotes the largest power of 10 that can be stored in a 32-bit unsigned integer
+ */
 #define MAX_POW_10_32 1000000000UL
+
+/**
+ * @brief This macro defines the power of MAX_POW_10_32. In other words, \f$\10^{\texttt{POW_OF_MAX_POW_10_32}} = \texttt{MAX_POW_10_32}\f$
+ */
 #define POW_OF_MAX_POW_10_32 9
+
+/**
+ * @brief This macro denotes the largest power of 10 that can be stored in a 64-bit unsigned integer
+ */
 #define MAX_POW_10_64 10000000000000000000ULL
+
+/**
+ * @brief This macro defines the power of MAX_POW_10_64. In other words, \f$\10^{\texttt{POW_OF_MAX_POW_10_64}} = \texttt{MAX_POW_10_64}\f$
+ */
 #define POW_OF_MAX_POW_10_64 19
+
+/**
+ * @brief This macro denotes the largest power of 10 that can be stored in a 128-bit unsigned integer
+ */
 #define MAX_POW_10_128 ((uintmax_t) MAX_POW_10_64 * (uintmax_t) MAX_POW_10_64)
+
+/**
+ * @brief This macro defines the power of MAX_POW_10_128. In other words, \f$\10^{\texttt{POW_OF_MAX_POW_10_128}} = \texttt{MAX_POW_10_128}\f$
+ */
 #define POW_OF_MAX_POW_10_128 38
 
 #endif
