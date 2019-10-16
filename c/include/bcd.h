@@ -68,11 +68,11 @@ typedef enum    {
 } BCD_error;
 
 /**
- * @brief A little-endian, arbitrary-precision, binary-coded decimal number
+ * @brief A little-endian, arbitrary-precision, binary-coded-decimal number
  */
 typedef struct BCD_int  {
-    packed_BCD_pair *data;  /**< the raw digits of the integer, DO NOT modify directly */
-    size_t bcd_digits;      /**< the byte count of digits */
+    packed_BCD_pair *data;  /**< the raw data of the integer, DO NOT modify directly */
+    size_t bcd_digits;      /**< the byte count of data */
     size_t decimal_digits;  /**< the number of decimal digits in this integer */
     bool negative : 1;      /**< indicates the integer is negative */
     bool zero : 1;          /**< indicates the integer is 0 */
@@ -136,6 +136,7 @@ const BCD_int BCD_nan = {
  * This will take \f$Θ(1)\f$ time if x is constant, and will match the time of free() if not. It is assumed in other
  * time analyses that this function takes constant time, but note that that may not be true in every C implementation.
  * For instance, if your implementation were to clear memory when freed this method would be \f$Θ(\log_{100}(x))\f$.
+ * @relates BCD_int
  */
 void free_BCD_int(BCD_int *const x);
 
@@ -1170,9 +1171,9 @@ BCD_int add_bcd(BCD_int x, const BCD_int y) {
         .negative = x.negative,  // we know this is also y.negative
         .data = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * (max_digits + 1)),
     };
-    bool overflow = false;
     if (unlikely(z.data == NULL))
         return bcd_error(NO_MEM, NO_MEM);
+    uint8_t overflow = false;  // note that it's only ever set to 0 or 1, but assembly complains if bool is specified
     packed_BCD_pair a, b, c;
     for (i = 0; i < min_digits; i++) {
         a = x.data[i];
@@ -1209,7 +1210,7 @@ BCD_int add_bcd(BCD_int x, const BCD_int y) {
                         "setc %1;"         // set the register containing overflow to hold the carry bit, set by daa
                                            // this next section tells the compiler what to do after execution
                       : "=a" (c),          // store the contents of register al in symbol c
-                        "=rgm" (overflow)  // and a general register or memory location gets assigned to symbol overflow (referenced as %1)
+                        "=gmr" (overflow)  // and a general register or memory location gets assigned to symbol overflow (referenced as %1)
                                            // then below tells the compiler what our inputs are
                       : "a" (a),           // symbol a should get dumped to register al
                         "rgm" (b)          // and symbol b in a general register or memory location (referenced as %3)
