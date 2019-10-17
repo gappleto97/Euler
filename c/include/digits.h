@@ -40,18 +40,20 @@ static unsigned char advance_digit_counter(digit_counter *dc)   {
  * @memberof digit_counter
  */
 digit_counter digits(uintmax_t n)  {
-    digit_counter ret = IteratorInitHead(advance_digit_counter);
     #if !PCC_COMPILER
-        size_t digit_len = ceil(log10(n + 1));
+        const size_t digit_len = ceil(log10(n + 1));
     #else
-        size_t digit_len = imprecise_log10(n + 1);
+        const size_t digit_len = imprecise_log10(n + 1);
     #endif
-    ret.digits = (unsigned char *) malloc(digit_len * sizeof(unsigned char));
+    digit_counter ret = IteratorInitHead(
+        advance_digit_counter,
+        ExtendInit(digits, (unsigned char *) malloc(digit_len * sizeof(unsigned char))),
+        ExtendInit(idx, digit_len - 1)
+    );
     for (size_t i = 0; i < digit_len; i++)    {
         ret.digits[i] = n % 10;
         n /= 10;
     }
-    ret.idx = digit_len - 1;
     return ret;
 }
 

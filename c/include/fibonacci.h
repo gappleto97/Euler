@@ -38,12 +38,9 @@ uintmax_t advance_fibonacci(fibonacci *fib)    {
 /**
  * @memberof fibonacci
  */
-fibonacci fibonacci1(uintmax_t limit)  {
-    fibonacci ret = IteratorInitHead(advance_fibonacci);
-    ret.a = 0;
-    ret.b = 1;
-    ret.limit = limit;
-    return ret;
+fibonacci fibonacci1(uintmax_t limit);
+inline fibonacci fibonacci1(uintmax_t limit)    {
+    return (fibonacci) IteratorInitHead(advance_fibonacci, ExtendInit(b, 1), ExtendInit(limit, limit));
 }
 
 /**

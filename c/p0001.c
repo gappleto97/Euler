@@ -22,15 +22,15 @@ namespace c::p0001 {
 
 int main(int argc, char const *argv[])  {
     unsigned long long answer = 0;
-    counter c = counter3(0, 1000, 3);
-    while (!c.exhausted)    {
-        answer += next(c);
+    counter a = counter3(0, 1000, 3);
+    while (!a.exhausted)    {
+        answer += next(a);
     }
-    c = counter3(0, 1000, 5);
-    while (!c.exhausted)    {
-        answer += next(c);
+    counter b = counter3(0, 1000, 5);
+    while (!b.exhausted)    {
+        answer += next(b);
     }
-    c = counter3(0, 1000, 15);
+    counter c = counter3(0, 1000, 15);
     while (!c.exhausted)    {
         answer -= next(c);
     }

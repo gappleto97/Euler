@@ -40,9 +40,7 @@ inline uintmax_t advance_factor_counter(factor_counter *fc) {
  */
 factor_counter proper_divisors(uintmax_t target);
 inline factor_counter proper_divisors(uintmax_t target) {
-    factor_counter ret = IteratorInitHead(advance_factor_counter);
-    ret.target = target;
-    ret.current = 0;
+    factor_counter ret = IteratorInitHead(advance_factor_counter, ExtendInit(target, target));
     return ret;
 }
 

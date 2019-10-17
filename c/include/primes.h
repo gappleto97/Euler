@@ -2,6 +2,7 @@
 #define PRIMES_H
 
 #include <stdint.h>
+#include <string.h>
 #include "macros.h"
 
 #if !PCC_COMPILER
@@ -33,6 +34,20 @@ struct prime_counter {
     IteratorTail(uintmax_t, prime_counter)
 };
 
+/**
+ * @implements c::include::iterator::Iterator
+ * The iterator that implements a modified sieve of eratosthenes
+ */
+struct prime_sieve {
+    uintmax_t *sieve;  /**< The sieve state used to generate new primes stored as pairs of [value, step] */
+    size_t sieve_len;  /**< The length of the sieve state (divided by 2) */
+    uintmax_t prime;  /**< The current reference prime */
+    uintmax_t prime_squared;  /**< The reference prime squared */
+    uintmax_t candidate;  /**< The current candidate prime number */
+    prime_counter source;  /**< The source of new reference prime numbers */
+    IteratorTail(uintmax_t, prime_sieve)
+};
+
 static uintmax_t *prime_cache;
 // note: If you let it, this will grow indefinitely. To not let it do so, #define PRIME_CACHE_SIZE_LIMIT
 static uintmax_t prime_cache_max = 0;
@@ -50,6 +65,9 @@ prime_sieve prime_sieve0();
  */
 uintmax_t advance_prime_counter(prime_counter *pc) {
     IterationHead(pc);
+    if (unlikely(pc->exhausted))    {
+        return 0;
+    }
     if (!prime_cache_size)  {  // if not already done, initialize the prime cache
         prime_cache = (uintmax_t *) malloc(sizeof(uintmax_t) * 4);
         prime_cache[0] = 2;
@@ -66,55 +84,49 @@ uintmax_t advance_prime_counter(prime_counter *pc) {
         }
         return p;
     }
-    for (uintmax_t p = prime_cache[pc->idx - 1] + 2; p < pc->stop; p += 2) {
-        bool broken = false;
-        for (size_t idx = 1; idx < prime_cache_idx; idx++)  {
-            if (p % prime_cache[idx] == 0)  {  // is not prime
-                broken = true;
-                break;
+    if (pc->ps == NULL) {
+        // keep in mind that recursion on this block will never continue beyond 1 level unless the nested pc exceeds the cache size.
+        // pc makes a ps. ps makes a nested pc. the nested pc never makes a ps because it can feed entirely on the cache
+        // similar story if you start from ps. ps makes a pc. pc eventually makes a nested ps, which makes a nested pc
+        // the nested pc feeds entirely off the cache and never makes a doubly-tested pc.
+        prime_sieve to_copy = prime_sieve0();
+        char *ptr = (char *) malloc(sizeof(prime_sieve));
+        memcpy(ptr, &to_copy, sizeof(prime_sieve));
+        pc->ps = (prime_sieve *) ptr;
+        while(next_p(pc->ps) < prime_cache[pc->idx - 1]) {}
+    }
+    const uintmax_t p = prime_cache[pc->idx] = next_p(pc->ps);
+    prime_cache_max = max(prime_cache_max, prime_cache[pc->idx]);
+    prime_cache_idx = max(prime_cache_idx, pc->idx);
+    if (pc->idx == prime_cache_idx) {
+        if (
+            prime_cache_size == prime_cache_idx
+            #ifdef PRIME_CACHE_SIZE_LIMIT
+                && prime_cache_size < PRIME_CACHE_SIZE_LIMIT
+            #endif
+        )   {
+            size_t new_size = prime_cache_size * 2;
+            #ifdef PRIME_CACHE_SIZE_LIMIT
+                if (new_size > PRIME_CACHE_SIZE_LIMIT)  {
+                    new_size = PRIME_CACHE_SIZE_LIMIT;
+                }
+            #endif
+            uintmax_t *tmp = (uintmax_t *) realloc(prime_cache, new_size * sizeof(uintmax_t));
+            if (tmp != NULL)    {
+                prime_cache = tmp;
+                prime_cache_size = new_size;
+                prime_cache[prime_cache_idx++] = prime_cache_max = p;
             }
         }
-        if (!broken)    {  // primeness not determined, exceeded cache
-            uintmax_t root_p = ceil(sqrt(p));
-            for (uintmax_t c = prime_cache_max; c <= root_p; c += 2)  {
-                if (p % c == 0) {  // is not prime
-                    broken = true;
-                    break;
-                }
-            }
-        }
-        if (!broken)    {  // is prime
-            if (pc->idx == prime_cache_idx) {
-#ifdef PRIME_CACHE_SIZE_LIMIT
-                if (prime_cache_size == prime_cache_idx && prime_cache_size < PRIME_CACHE_SIZE_LIMIT)   {
-#else
-                if (prime_cache_size == prime_cache_idx)    {
-#endif
-                    size_t new_size = prime_cache_size * 2;
-#ifdef PRIME_CACHE_SIZE_LIMIT
-                    if (new_size > PRIME_CACHE_SIZE_LIMIT)  {
-                        new_size = PRIME_CACHE_SIZE_LIMIT;
-                    }
-#endif
-                    uintmax_t *tmp = (uintmax_t *) realloc(prime_cache, new_size * sizeof(uintmax_t));
-                    if (tmp != NULL)    {
-                        prime_cache = tmp;
-                        prime_cache_size = new_size;
-                        prime_cache[prime_cache_idx++] = prime_cache_max = p;
-                    }
-                } else  {
-                    prime_cache[prime_cache_idx++] = p;
-                }
-            }
-            pc->idx++;
-            if ((pc->exhausted = (p >= pc->stop)))  {
-                return 0;
-            }
-            return p;
+        else    {
+            prime_cache[prime_cache_idx++] = p;
         }
     }
-    pc->exhausted = true;  // shouldn't get here, but just in case
-    return 0;
+    pc->idx++;
+    if ((pc->exhausted = (p >= pc->stop)))  {
+        return 0;
+    }
+    return p;
 }
 
 /**
@@ -123,12 +135,9 @@ uintmax_t advance_prime_counter(prime_counter *pc) {
  *
  * @memberof prime_counter
  */
-prime_counter prime_counter1(uintmax_t stop)  {
-    prime_counter ret = IteratorInitHead(advance_prime_counter);
-    ret.idx = 0;
-    ret.stop = stop;
-    ret.ps = NULL;
-    return ret;
+prime_counter prime_counter1(uintmax_t stop);
+inline prime_counter prime_counter1(uintmax_t stop) {
+    return (prime_counter) IteratorInitHead(advance_prime_counter, ExtendInit(stop, stop));
 }
 
 /**
@@ -140,21 +149,6 @@ prime_counter prime_counter0();
 inline prime_counter prime_counter0()   {
     return prime_counter1(-1);
 }
-
-
-/**
- * @implements c::include::iterator::Iterator
- * The iterator that implements a modified sieve of eratosthenes
- */
-struct prime_sieve {
-    uintmax_t *sieve;  /**< The sieve state used to generate new primes stored as pairs of [value, step] */
-    size_t sieve_len;  /**< The length of the sieve state (divided by 2) */
-    uintmax_t prime;  /**< The current reference prime */
-    uintmax_t prime_squared;  /**< The reference prime squared */
-    uintmax_t candidate;  /**< The current candidate prime number */
-    prime_counter source;  /**< The source of new reference prime numbers */
-    IteratorTail(uintmax_t, prime_sieve)
-};
 
 /**
  * The function to advance a prime sieve iterator
@@ -223,18 +217,17 @@ uintmax_t advance_prime_sieve(prime_sieve *ps) {
  * @memberof prime_sieve
  */
 prime_sieve prime_sieve0()  {
-    prime_sieve ret = IteratorInitHead(advance_prime_sieve);
-    ret.sieve = NULL;
-    ret.sieve_len = 0;
-    ret.prime = 3;
-    ret.prime_squared = 9;
-    ret.candidate = 2;
-    ret.source = prime_counter0();
+    prime_sieve ret = IteratorInitHead(
+        advance_prime_sieve,
+        ExtendInit(source, prime_counter0()),
+        ExtendInit(prime, 3),
+        ExtendInit(prime_squared, 9),
+        ExtendInit(candidate, 2)
+    );
     next(ret.source);
     next(ret.source);
     return ret;
 }
-
 
 /**
  * The destructor for the prime number counter
@@ -305,10 +298,12 @@ uintmax_t advance_prime_factor_counter(prime_factor_counter *pfc)  {
  * If you put in 0, behaviour is undefined
  */
 prime_factor_counter prime_factors(uintmax_t n)    {
-    prime_factor_counter ret = IteratorInitHead(advance_prime_factor_counter);
-    ret.current = 2;
-    ret.target = n;
-    ret.pc = prime_counter0();
+    prime_factor_counter ret = IteratorInitHead(
+        advance_prime_factor_counter,
+        ExtendInit(pc, prime_counter0()),
+        ExtendInit(current, 2),
+        ExtendInit(target, n)
+    );
     next(ret.pc);
     return ret;
 }
@@ -318,6 +313,7 @@ prime_factor_counter prime_factors(uintmax_t n)    {
  *
  * @memberof prime_factor_counter
  */
+void free_prime_factor_counter(prime_factor_counter pfc);
 inline void free_prime_factor_counter(prime_factor_counter pfc) {
     free_prime_counter(pfc.pc);
 }

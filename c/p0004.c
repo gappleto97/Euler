@@ -22,11 +22,10 @@ namespace c::p0004 {
 int main(int argc, char const *argv[])  {
     unsigned int answer = 0, i, j, a, z, prod;
     bool broken;
-    digit_counter dc;
     for (i = 100; i < 1000; i++)    {
         for (j = 100; j < 1000; j++)    {
             prod = i * j;
-            dc = digits(prod);
+            digit_counter dc = digits(prod);
             broken = false;
             for (a = 0, z = dc.idx; a < z; a++, z--)    {
                 if (dc.digits[a] != dc.digits[z])   {

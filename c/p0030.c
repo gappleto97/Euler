@@ -25,9 +25,8 @@ namespace c::p0030 {
 
 int main(int argc, char const *argv[])  {
     unsigned long long answer = 0, sum, tmp;
-    digit_counter dc;
     for (unsigned long long i = 2; i < 1000000; i++)    {
-        dc = digits(i);
+        digit_counter dc = digits(i);
         sum = 0;
         while (!dc.exhausted)   {
             tmp = next(dc);

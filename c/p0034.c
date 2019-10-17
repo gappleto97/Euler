@@ -20,10 +20,9 @@ namespace c::p0034 {
 
 int main(int argc, char const *argv[])  {
     unsigned long long answer = 0, sum;
-    digit_counter dc;
     for (unsigned long i = 10; i < 100000; i++) {
         sum = 0;
-        dc = digits(i);
+        digit_counter dc = digits(i);
         while (!dc.exhausted)   {
             sum += factorial(next(dc));
         }

@@ -40,7 +40,7 @@ namespace c::include::iterator {
  * @endcode
  */
 #define IteratorTail(return_type, struct_type) \
-    return_type (*iterator_function)(struct_type *it); /**< @private The pointer to the iteration function @see next @cond EXPAND_ITERATOR_TAIL */\
+    return_type (*const iterator_function)(struct_type *it); /**< @private The pointer to the iteration function @see next @cond EXPAND_ITERATOR_TAIL */\
     bool exhausted : 1;\
     bool started : 1;\
     bool phase : 1; /** @endcond */
@@ -73,6 +73,7 @@ namespace c::include::iterator {
 /**
  * @brief The base macro for all iterator initialization functions in this project
  * @param advance The function this iterator uses to advance
+ * @param ... Additional things to initialize wrapped in ExtendInit()
  * @returns A compound literal that initializes the @ref c::include::iterator::Iterator "Iterator-defined" portions of your subclass
  * @relatedalso c::include::iterator::Iterator
  * @see counter
@@ -87,6 +88,11 @@ namespace c::include::iterator {
  * @attention
  * The iterator function you give it MUST take in ONLY a pointer to the declared struct
  *
+ * @attention
+ * Because the pointer to the iteration function is constant, any nested @ref c::include::iterator::Iterator "Iterators" must be initialized
+ * in the original assigning expression, and @ref c::include::iterator::Iterator "Iterators" cannot be reassigned to entierely. It is often
+ * recommended to provide a "reset" function as an alternative to the standard constructor if you want these objects to be reused.
+ *
  * Example:
  * @code{.c}
  * counter counter0() {
@@ -97,7 +103,30 @@ namespace c::include::iterator {
  * }
  * @endcode
  */
-#define IteratorInitHead(advance) {.iterator_function = &advance}
+#define IteratorInitHead(advance, ...) {.iterator_function = &advance, __VA_ARGS__}
+
+/**
+ * @brief The extension macro for initializing more complicated @ref c::include::iterator::Iterator "Iterators"
+ * @param name The name you would like to assign to in the struct (do not include the struct name or initial .)
+ * @param value The value you would like to assign
+ * @relatedalso c::include::iterator::Iterator
+ *
+ * Assignment example:
+ * @code{.c}
+ * counter counter0() {
+ *     counter ct = IteratorInitHead(iterate_counter, ExtendInit(step, 1), ExtendInit(stop, 100));
+ *     return ct;  // note all other values are initialized to 0
+ * }
+ * @endcode
+ *
+ * Direct return example:
+ * @code{.c}
+ * counter counter0() {
+ *     return (counter) IteratorInitHead(iterate_counter, ExtendInit(step, 1), ExtendInit(stop, 100));
+ * }
+ * @endcode
+ */
+#define ExtendInit(name, value) .name = value
 
 /**
  * @brief The macro to advance generic iterators
@@ -178,11 +207,12 @@ static inline uintmax_t iterate_counter(counter *i) {
  */
 counter counter3(uintmax_t start, uintmax_t stop, intmax_t step);
 inline counter counter3(uintmax_t start, uintmax_t stop, intmax_t step) {
-    counter ret = IteratorInitHead(iterate_counter);
-    ret.idx = start;
-    ret.stop = stop;
-    ret.step = step;
-    return ret;
+    return (counter) IteratorInitHead(
+        iterate_counter,
+        ExtendInit(idx, start),
+        ExtendInit(stop, stop),
+        ExtendInit(step, step)
+    );
 }
 
 /**
