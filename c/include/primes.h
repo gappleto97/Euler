@@ -115,7 +115,7 @@ uintmax_t advance_prime_counter(prime_counter *pc) {
                 prime_cache[prime_cache_idx++] = prime_cache_max = p;
             }
         }
-        else if (pc->idx < prime_cache_idx) {
+        else    {
             prime_cache[prime_cache_idx++] = p;
         }
     }
