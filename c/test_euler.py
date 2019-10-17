@@ -158,7 +158,7 @@ CLANG_TEMPLATE = "{} {{}} -O3 {} {} -Wall -Werror -std=c11 {} -o {{}}"
 templates = {
     'GCC': GCC_TEMPLATE.format(GCC_BINARY, ''),
     'CLANG': CLANG_TEMPLATE.format('clang', CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=0'),
-    'CL': "cl -Fe:{{1}} -Fo{}\\ -O2 -GL -GF -GW -Wall -WX -Brepro -TC {{0}}".format(BUILD_FOLDER.joinpath('objects')),
+    'CL': "cl -Fe:{{1}} -Fo{}\\ -O2 -GL -GF -GW -Brepro -TC {{0}}".format(BUILD_FOLDER.joinpath('objects')),
     'TCC': "tcc -lm -Wall -Werror -o {1} {0}",
     'ICC': GCC_TEMPLATE.format('icc', ''),
     'PCC': "pcc -O3 -DNO_USER_WARNINGS -Wall -Werror -o {1} {0}",
@@ -179,6 +179,11 @@ templates = {
 def cleanup():
     if 'PYTEST_XDIST_WORKER' not in environ:
         rmtree(BUILD_FOLDER)
+
+
+@fixture(params=sorted(x.ljust(COMPILER_LEN) for x in compilers if x not in ('CL', 'PCC')))
+def v_compiler(request):  # type: ignore
+    return request.param.strip()
 
 
 @fixture(params=sorted(x.ljust(COMPILER_LEN) for x in compilers))
@@ -287,15 +292,10 @@ def test_problem(benchmark, key, compiler):
 
 
 if which('valgrind'):
-    def test_valgrind(key, compiler):
-        if (
-            (NO_SLOW and key in known_slow) or
-            (ONLY_SLOW and key not in known_slow) or
-            NO_OPTIONAL_TESTS or
-            compiler in ('CL', 'PCC')
-        ):
+    def test_valgrind(key, v_compiler):
+        if (NO_SLOW and key in known_slow) or (ONLY_SLOW and key not in known_slow) or NO_OPTIONAL_TESTS:
             skip()
         filename = SOURCE_TEMPLATE.format(key)
-        exe_name = EXE_TEMPLATE.format(key, compiler)  # need to have both to keep name unique
-        check_call(templates['debug'][compiler].format(filename, exe_name).split())
+        exe_name = EXE_TEMPLATE.format(key, 'valgrind.' + v_compiler)  # need to have both to keep name unique
+        check_call(templates['debug'][v_compiler].format(filename, exe_name).split())
         check_output(['valgrind', '--error-exitcode=1', '--leak-check=yes', '-s', exe_name], cwd=BUILD_FOLDER)
