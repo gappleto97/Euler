@@ -42,6 +42,8 @@ int main(int argc, char const *argv[])  {
         swap(a, b, BCD_int);
         answer++;
     }
+    free_BCD_int(&a);
+    free_BCD_int(&b);
     printf("%llu", answer);
     return 0;
 }

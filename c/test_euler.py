@@ -152,17 +152,26 @@ SOURCE_TEMPLATE = "{}{}p{{:0>4}}.c".format(C_FOLDER, sep)
 EXE_TEMPLATE = "{}{}p{{:0>4}}.{{}}.{}".format(BUILD_FOLDER, sep, EXE_EXT)
 # include sep in the recipe so that Windows won't complain
 
-GCC_TEMPLATE = "{} {{}} -O3 -lm -Wall -Werror -std=c11 -march=native -flto -fwhole-program -o {{}}"
+GCC_TEMPLATE = "{} {{}} -O3 {} -lm -Wall -Werror -std=c11 -march=native -flto -fwhole-program -o {{}}"
 CLANG_TEMPLATE = "{} {{}} -O3 {} {} -Wall -Werror -std=c11 {} -o {{}}"
 
 templates = {
-    'GCC': GCC_TEMPLATE.format(GCC_BINARY),
+    'GCC': GCC_TEMPLATE.format(GCC_BINARY, ''),
     'CLANG': CLANG_TEMPLATE.format('clang', CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=0'),
-    'CL': "cl -Fe:{{1}} -Fo{}\\ -O2 -GL -GF -GW -Brepro -TC {{0}}".format(BUILD_FOLDER.joinpath('objects')),
+    'CL': "cl -Fe:{{1}} -Fo{}\\ -O2 -GL -GF -GW -Wall -WX -Brepro -TC {{0}}".format(BUILD_FOLDER.joinpath('objects')),
     'TCC': "tcc -lm -Wall -Werror -o {1} {0}",
-    'ICC': GCC_TEMPLATE.format('icc'),
+    'ICC': GCC_TEMPLATE.format('icc', ''),
     'PCC': "pcc -O3 -DNO_USER_WARNINGS -Wall -Werror -o {1} {0}",
     'AOCC': CLANG_TEMPLATE.format(AOCC_BINARY, CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=1'),
+    'debug': {
+        'GCC': GCC_TEMPLATE.format(GCC_BINARY, '-g'),
+        'CLANG': CLANG_TEMPLATE.format('clang', CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=0 -g'),
+        # CL would go here if I thought it worked with gdb/valgrind
+        'TCC': "tcc -lm -Wall -Werror -g -o {1} {0}",
+        'ICC': GCC_TEMPLATE.format('icc', '-g'),
+        # PCC would go here if it worked with valgrind
+        'AOCC': CLANG_TEMPLATE.format(AOCC_BINARY, CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=1 -g'),
+    }
 }
 
 
@@ -275,3 +284,18 @@ def test_problem(benchmark, key, compiler):
         fail_func = xfail if key in known_slow else fail
         stats = benchmark.stats.stats
         fail_func("Exceeding 60s! (Max={:.6}s, Median={:.6}s)".format(stats.max, stats.median))
+
+
+if which('valgrind'):
+    def test_valgrind(key, compiler):
+        if (
+            (NO_SLOW and key in known_slow) or
+            (ONLY_SLOW and key not in known_slow) or
+            NO_OPTIONAL_TESTS or
+            compiler in ('CL', 'PCC')
+        ):
+            skip()
+        filename = SOURCE_TEMPLATE.format(key)
+        exe_name = EXE_TEMPLATE.format(key, compiler)  # need to have both to keep name unique
+        check_call(templates['debug'][compiler].format(filename, exe_name).split())
+        check_output(['valgrind', '--error-exitcode=1', '--leak-check=yes', '-s', exe_name], cwd=BUILD_FOLDER)

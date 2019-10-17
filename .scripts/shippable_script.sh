@@ -53,7 +53,7 @@ else
         export PATH
         cd ..
     else
-        sudo apt-get install -y $COMPILER_OVERRIDE python3-pip
+        sudo apt-get install -y valgrind $COMPILER_OVERRIDE python3-pip
     fi
     cd c && make test USER_FLAG=
 fi

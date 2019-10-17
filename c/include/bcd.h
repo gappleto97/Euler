@@ -781,6 +781,8 @@ BCD_int mul_bcd_cuint(const BCD_int x, uintmax_t y);
  * @return The result of \f$(x \cdot 10^{\texttt{tens}})\f$
  * @remark
  * This function takes \f$Θ(\log_{100}(x))\f$ time
+ * @bug
+ * This function currently over-allocates memory by one byte. That makes me think I have an off-by-one error when @c tens is odd. It needs further investigation.
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
@@ -1661,7 +1663,9 @@ BCD_int mul_bcd_pow_10(const BCD_int x, const uintmax_t tens)   {
         .decimal_digits = x.decimal_digits + tens,
     };
     ret.bcd_digits = (ret.decimal_digits + 1) / 2;
-    ret.data = (packed_BCD_pair *) calloc(ret.bcd_digits, sizeof(packed_BCD_pair));
+    ret.data = (packed_BCD_pair *) calloc(ret.bcd_digits + 1, sizeof(packed_BCD_pair));
+    // TODO: why does valgrind complain if I don't add 1 here? That makes me thing my math below is wrong.
+    // specifically I'm referring to the else block below, just after the loop.
     if (unlikely(ret.data == NULL))
         return bcd_error(NO_MEM, NO_MEM);
     if (tens % 2 == 0)  {
