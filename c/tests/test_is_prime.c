@@ -19,10 +19,13 @@ int main(int argc, char const *argv[]) {
         for (i = prev + 1; i < p; i++)  {
             printf("%" PRIuMAX " %d %" PRIuMAX " -1\n", i, is_prime(i), is_composite(i));
         }
+        if (p == 29)
+            printf("\n");
         printf("%" PRIuMAX " %d %" PRIuMAX " %" PRIuMAX "\n", p, is_prime(p), is_composite(p), (uintmax_t) pc.idx - 1);
         prev = p;
         p = next(pc);
     }
+    free_prime_counter(pc);
     return 0;
 }
 

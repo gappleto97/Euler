@@ -48,7 +48,7 @@ struct prime_sieve {
     IteratorTail(uintmax_t, prime_sieve)
 };
 
-static uintmax_t *prime_cache;
+static uintmax_t *prime_cache = NULL;
 // note: If you let it, this will grow indefinitely. To not let it do so, #define PRIME_CACHE_SIZE_LIMIT
 static uintmax_t prime_cache_max = 0;
 static size_t prime_cache_size = 0;
@@ -90,12 +90,11 @@ uintmax_t advance_prime_counter(prime_counter *pc) {
         // similar story if you start from ps. ps makes a pc. pc eventually makes a nested ps, which makes a nested pc
         // the nested pc feeds entirely off the cache and never makes a doubly-tested pc.
         prime_sieve to_copy = prime_sieve0();
-        char *ptr = (char *) malloc(sizeof(prime_sieve));
-        memcpy(ptr, &to_copy, sizeof(prime_sieve));
-        pc->ps = (prime_sieve *) ptr;
+        pc->ps = (prime_sieve *) malloc(sizeof(prime_sieve));
+        memcpy(pc->ps, &to_copy, sizeof(prime_sieve));
         while(next_p(pc->ps) < prime_cache[pc->idx - 1]) {}
     }
-    const uintmax_t p = prime_cache[pc->idx] = next_p(pc->ps);
+    const uintmax_t p = next_p(pc->ps);
     if (pc->idx == prime_cache_idx) {
         if (
             prime_cache_size == prime_cache_idx
@@ -109,7 +108,7 @@ uintmax_t advance_prime_counter(prime_counter *pc) {
                     new_size = PRIME_CACHE_SIZE_LIMIT;
                 }
             #endif
-            uintmax_t *tmp = (uintmax_t *) realloc(prime_cache, new_size * sizeof(uintmax_t));
+            void *tmp = realloc(prime_cache, new_size * sizeof(uintmax_t));
             if (tmp != NULL)    {
                 prime_cache = tmp;
                 prime_cache_size = new_size;
