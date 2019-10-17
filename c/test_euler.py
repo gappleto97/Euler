@@ -298,4 +298,4 @@ if which('valgrind'):
         filename = SOURCE_TEMPLATE.format(key)
         exe_name = EXE_TEMPLATE.format(key, 'valgrind.' + v_compiler)  # need to have both to keep name unique
         check_call(templates['debug'][v_compiler].format(filename, exe_name).split())
-        check_output(['valgrind', '--error-exitcode=1', '--leak-check=yes', '-s', exe_name], cwd=BUILD_FOLDER)
+        check_output(['valgrind', '--error-exitcode=1', '--leak-check=yes', '--show-error-list=yes', exe_name], cwd=BUILD_FOLDER)
