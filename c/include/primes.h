@@ -96,8 +96,6 @@ uintmax_t advance_prime_counter(prime_counter *pc) {
         while(next_p(pc->ps) < prime_cache[pc->idx - 1]) {}
     }
     const uintmax_t p = prime_cache[pc->idx] = next_p(pc->ps);
-    prime_cache_max = max(prime_cache_max, prime_cache[pc->idx]);
-    prime_cache_idx = max(prime_cache_idx, pc->idx);
     if (pc->idx == prime_cache_idx) {
         if (
             prime_cache_size == prime_cache_idx
@@ -118,7 +116,7 @@ uintmax_t advance_prime_counter(prime_counter *pc) {
                 prime_cache[prime_cache_idx++] = prime_cache_max = p;
             }
         }
-        else    {
+        else if (pc->idx < prime_cache_idx) {
             prime_cache[prime_cache_idx++] = p;
         }
     }
