@@ -1,10 +1,10 @@
 from atexit import register
 from functools import partial
 from itertools import chain
-from os import environ, listdir, sep
+from os import environ, listdir, sep, unlink
 from pathlib import Path
 from platform import machine, processor, system, uname
-from shutil import rmtree, which
+from shutil import copy, rmtree, which
 from subprocess import check_call, check_output, run
 from sys import path
 from tempfile import TemporaryFile
@@ -16,7 +16,9 @@ from warnings import warn
 from pytest import fail, fixture, mark, skip, xfail
 
 C_FOLDER = Path(__file__).parent
-BUILD_FOLDER = C_FOLDER.joinpath('build')
+BUILD_FOLDER = C_FOLDER.joinpath('build', 'test-run-{}'.format(uuid4()))
+# each test run is isolated using UUIDs. if a particular test needs to touch something
+# outside this folder, it is expected to use a UUID to isolate it as well, and clean up
 path.append(str(C_FOLDER.parent.joinpath("python")))
 
 answers = {
@@ -52,7 +54,8 @@ IN_TERMUX = bool(which('termux-setup-storage'))
 IN_LINUX = (not IN_TERMUX) and (system() == 'Linux')
 
 if IN_TERMUX:
-    BUILD_FOLDER = Path.home().joinpath('build')  # Termux can't make executable files outside of $HOME
+    BUILD_FOLDER = Path.home().joinpath('build', 'test-run-{}'.format(uuid4()))
+    # Termux can't make executable files outside of $HOME
 
 _raw_NO_SLOW = environ.get('NO_SLOW')
 try:
@@ -126,23 +129,26 @@ CL_NO_64 = False
 if 'CL' in compilers:
     OBJ_FOLDER = BUILD_FOLDER.joinpath('objects')
     OBJ_FOLDER.mkdir(exist_ok=True)
-    _test_file = str(C_FOLDER.joinpath('assertions', 'x64_assert.c'))
-    _test_exe = str(BUILD_FOLDER.joinpath('test_cl_64_support.out'))
+    _test_file = BUILD_FOLDER.parent.joinpath('{}.c'.format(uuid4()))
+    # need to rename because CL makes object files based on source name
+    copy(C_FOLDER.joinpath('assertions', 'x64_assert.c'), _test_file)
+    _test_exe = str(BUILD_FOLDER.joinpath('test_cl_64_support-{}.out'.format(uuid4())))
     CL_NO_64 = not (run(['cl', '-Fe:{}'.format(_test_exe), '-Fo{}\\'.format(OBJ_FOLDER), str(_test_file)]).returncode)
+    unlink(_test_file)
 
 _test_file = str(C_FOLDER.joinpath('p0000_template.c'))
 GCC_NO_64 = False
 if EXE_EXT == 'x86_64' and 'GCC' in compilers:
     # MingW GCC sometimes doesn't have 64-bit support on 64-bit targets
     # not knowing this will make the compiler macro test fail
-    _test_exe = str(BUILD_FOLDER.joinpath('test_gcc_64_support.out'))
-    GCC_NO_64 = bool(run([GCC_BINARY, _test_file, '-O0', '-m64', '-o', str(_test_exe)]).returncode)
+    _test_exe = str(BUILD_FOLDER.joinpath('test_gcc_64_support-{}.out'.format(uuid4())))
+    GCC_NO_64 = bool(run([GCC_BINARY, _test_file, '-O0', '-m64', '-o', _test_exe]).returncode)
 
 CLANG_LINK_MATH = CLANG_ARCH = ''
 if not IN_WINDOWS:
     CLANG_LINK_MATH = '-lm'
 if 'CLANG' in compilers:
-    _test_exe = str(BUILD_FOLDER.joinpath('test_clang_arch_native.out'))
+    _test_exe = str(BUILD_FOLDER.joinpath('test_clang_arch_native-{}.out'.format(uuid4())))
     CLANG_ARCH = '-march=native' * (not run(['clang', _test_file, '-O0', '-march=native', '-o', _test_exe]).returncode)
 
 SOURCE_TEMPLATE = "{}{}p{{:0>4}}.c".format(C_FOLDER, sep)
@@ -155,7 +161,7 @@ CLANG_TEMPLATE = "{} {{}} -O3 {} {} -Wall -Werror -std=c11 {} -o {{}}"
 templates = {
     'GCC': GCC_TEMPLATE.format(GCC_BINARY, ''),
     'CLANG': CLANG_TEMPLATE.format('clang', CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=0'),
-    'CL': "cl -Fe:{{1}} -Fo{}\\ -O2 -GL -GF -GW -Brepro -TC {{0}}".format(BUILD_FOLDER.joinpath('objects')),
+    'CL': "cl -Fe:{{1}} -Fo{}\\ -O2 -GL -GF -Brepro -WX -W3 -TC {{0}}".format(BUILD_FOLDER.joinpath('objects')),
     'TCC': "tcc -lm -Wall -Werror -o {1} {0}",
     'ICC': GCC_TEMPLATE.format('icc', ''),
     'AOCC': CLANG_TEMPLATE.format(AOCC_BINARY, CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=1'),
@@ -172,7 +178,10 @@ templates = {
 
 @register
 def cleanup():
-    if 'PYTEST_XDIST_WORKER' not in environ:
+    try:
+        rmtree(BUILD_FOLDER)
+    except PermissionError:  # Windows might complain an executable is still in use
+        sleep(0.5)
         rmtree(BUILD_FOLDER)
 
 

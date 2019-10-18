@@ -784,7 +784,7 @@ BCD_int mul_bcd_cuint(const BCD_int x, uintmax_t y);
  * @attention
  * All operators that return a @ref BCD_int will return @ref BCD_nan "NaN" if fed @ref BCD_nan "NaN", and set error to @ref BCD_error "{OP}_NAN".
  */
-BCD_int mul_bcd_pow_10(const BCD_int x, const uintmax_t tens);
+BCD_int mul_bcd_pow_10(const BCD_int x, const size_t tens);
 
 /**
  * @brief Multiply a @ref BCD_int by a power of ten
@@ -800,7 +800,7 @@ BCD_int mul_bcd_pow_10(const BCD_int x, const uintmax_t tens);
  * @note
  * This is just an alias for @ref mul_bcd_pow_10
  */
-BCD_int shift_bcd_left(const BCD_int a, const uintmax_t tens);
+BCD_int shift_bcd_left(const BCD_int a, const size_t tens);
 
 /**
  * @brief Divide a @ref BCD_int by a power of ten
@@ -814,7 +814,7 @@ BCD_int shift_bcd_left(const BCD_int a, const uintmax_t tens);
  * @attention
  * All operators that return a @ref BCD_int will return @ref BCD_nan "NaN" if fed @ref BCD_nan "NaN", and set error to @ref BCD_error "{OP}_NAN".
  */
-BCD_int div_bcd_pow_10(const BCD_int x, const uintmax_t tens);
+BCD_int div_bcd_pow_10(const BCD_int x, const size_t tens);
 
 /**
  * @brief Divide a @ref BCD_int by a power of ten
@@ -830,7 +830,7 @@ BCD_int div_bcd_pow_10(const BCD_int x, const uintmax_t tens);
  * @note
  * This is just an alias for @ref div_bcd_pow_10
  */
-BCD_int shift_bcd_right(const BCD_int a, const uintmax_t tens);
+BCD_int shift_bcd_right(const BCD_int a, const size_t tens);
 
 /**
  * @brief Raise a C-style integer to the power of another C-style signed integer
@@ -904,7 +904,7 @@ void imul_bcd_cuint(BCD_int *const x, const uintmax_t y);
  * @attention
  * All in-place operators will "return" @ref BCD_nan "NaN" if fed @ref BCD_nan "NaN", and set error to @ref BCD_error "{OP}_NAN".
  */
-void imul_bcd_pow_10(BCD_int *const x, const uintmax_t tens);
+void imul_bcd_pow_10(BCD_int *const x, const size_t tens);
 
 /**
  * @brief Multiply in-place a @ref BCD_int by a power of ten
@@ -917,7 +917,7 @@ void imul_bcd_pow_10(BCD_int *const x, const uintmax_t tens);
  * @attention
  * All in-place operators will "return" @ref BCD_nan "NaN" if fed @ref BCD_nan "NaN", and set error to @ref BCD_error "{OP}_NAN".
  */
-void ishift_bcd_left(BCD_int *const a, const uintmax_t tens);
+void ishift_bcd_left(BCD_int *const a, const size_t tens);
 
 /**
  * @brief Divide in-place a @ref BCD_int by a power of ten
@@ -932,7 +932,7 @@ void ishift_bcd_left(BCD_int *const a, const uintmax_t tens);
  * @todo
  * This function is not yet supported for odd values of tens
  */
-void idiv_bcd_pow_10(BCD_int *const x, const uintmax_t tens);
+void idiv_bcd_pow_10(BCD_int *const x, const size_t tens);
 
 /**
  * @brief Divide in-place a @ref BCD_int by a power of ten
@@ -947,7 +947,7 @@ void idiv_bcd_pow_10(BCD_int *const x, const uintmax_t tens);
  * @todo
  * This function is not yet supported for odd values of tens
  */
-void ishift_bcd_right(BCD_int *const a, const uintmax_t tens);
+void ishift_bcd_right(BCD_int *const a, const size_t tens);
 
 /** @} */ //
 /** @} */ // end of in_place_bcd_c_operators
@@ -1355,9 +1355,8 @@ BCD_int mul_bcd(const BCD_int x, const BCD_int y)   {
         return bcd_error(MUL_NAN, (x.nan) ? x.orig_error : y.orig_error);
     if (unlikely(x.zero || y.zero))
         return answer;
-    size_t i, j;
+    size_t i, j, pow_10, ipow_10 = 0;
     uint16_t staging;
-    uintmax_t ipow_10 = 0, pow_10;
     for (i = 0; i < x.bcd_digits; i++, ipow_10 += 2)  {
         for (j = 0, pow_10 = ipow_10; j < y.bcd_digits; j++, pow_10 += 2) {
             if ((staging = mul_dig_pair(x.data[i], y.data[j])) == 0)
@@ -1565,7 +1564,7 @@ intmax_t val_bcd_cint(const BCD_int x)  {
     uintmax_t answer = abs_bcd_cuint(x);
     if (answer > (uintmax_t) INTMAX_MAX)
         return INTMAX_MIN;  // overflowed
-    return (intmax_t) ((x.negative) ? -answer : answer);
+    return  ((x.negative) ? -((intmax_t) answer) : (intmax_t) answer);
 }
 
 inline comp_t cmp_bcd_cint(const BCD_int x, const intmax_t y)   {
@@ -1626,7 +1625,8 @@ BCD_int mul_bcd_cuint(const BCD_int x, uintmax_t y) {
     if (tens)
         ret = mul_bcd_pow_10(x, tens);
     // then for decreasing powers of ten, batch additions
-    for (uintmax_t p = MAX_POW_10_64, tens = POW_OF_MAX_POW_10_64; p > 1; p /= 10, --tens)  {
+    tens = POW_OF_MAX_POW_10_64;
+    for (uintmax_t p = MAX_POW_10_64; p > 1; p /= 10, --tens)   {
         while (y >= p)  {
             mul_by_power_10 = mul_bcd_pow_10(x, tens);
             iadd_bcd(&ret, mul_by_power_10);
@@ -1640,7 +1640,7 @@ BCD_int mul_bcd_cuint(const BCD_int x, uintmax_t y) {
     return ret;
 }
 
-BCD_int mul_bcd_pow_10(const BCD_int x, const uintmax_t tens)   {
+BCD_int mul_bcd_pow_10(const BCD_int x, const size_t tens)  {
     // this takes O(log_100(x)) time. Note that it's significantly faster if tens is even
     // returns x * 10^tens
     if (unlikely(x.nan))
@@ -1649,10 +1649,10 @@ BCD_int mul_bcd_pow_10(const BCD_int x, const uintmax_t tens)   {
         return BCD_zero;
     if (unlikely(!tens))
         return copy_BCD_int(x);
-    BCD_int ret = (BCD_int) {
+    BCD_int ret = {
         .even = x.even || !!tens,
         .negative = x.negative,
-        .decimal_digits = x.decimal_digits + tens,
+        .decimal_digits = (size_t) x.decimal_digits + tens,
     };
     ret.bcd_digits = (ret.decimal_digits + 1) / 2;
     ret.data = (packed_BCD_pair *) calloc(ret.bcd_digits + 1, sizeof(packed_BCD_pair));
@@ -1686,11 +1686,11 @@ BCD_int mul_bcd_pow_10(const BCD_int x, const uintmax_t tens)   {
     return ret;
 }
 
-inline BCD_int shift_bcd_left(const BCD_int x, const uintmax_t tens)    {
+inline BCD_int shift_bcd_left(const BCD_int x, const size_t tens)    {
     return mul_bcd_pow_10(x, tens);
 }
 
-BCD_int div_bcd_pow_10(const BCD_int a, const uintmax_t tens)   {
+BCD_int div_bcd_pow_10(const BCD_int a, const size_t tens)   {
     if (unlikely(a.nan))
         return bcd_error(SHIFT_NAN, a.orig_error);
     if (unlikely(!tens))
@@ -1730,7 +1730,7 @@ BCD_int div_bcd_pow_10(const BCD_int a, const uintmax_t tens)   {
     return ret;
 }
 
-inline BCD_int shift_bcd_right(const BCD_int a, const uintmax_t tens)   {
+inline BCD_int shift_bcd_right(const BCD_int a, const size_t tens)   {
     return div_bcd_pow_10(a, tens);
 }
 
@@ -1764,23 +1764,23 @@ inline void imul_bcd_cint(BCD_int *const x, const intmax_t y)   {
     *x = ret;
 }
 
-inline void imul_bcd_pow_10(BCD_int *const x, const uintmax_t tens) {
+inline void imul_bcd_pow_10(BCD_int *const x, const size_t tens) {
     BCD_int ret = mul_bcd_pow_10(*x, tens);
     free_BCD_int(x);
     *x = ret;
 }
 
-inline void ishift_bcd_left(BCD_int *const x, const uintmax_t tens) {
+inline void ishift_bcd_left(BCD_int *const x, const size_t tens) {
     imul_bcd_pow_10(x, tens);
 }
 
-inline void idiv_bcd_pow_10(BCD_int *const a, const uintmax_t tens) {
+inline void idiv_bcd_pow_10(BCD_int *const a, const size_t tens) {
     BCD_int ret = div_bcd_pow_10(*a, tens);
     free_BCD_int(a);
     *a = ret;
 }
 
-inline void ishift_bcd_right(BCD_int *const a, const uintmax_t tens)    {
+inline void ishift_bcd_right(BCD_int *const a, const size_t tens)    {
     idiv_bcd_pow_10(a, tens);
 }
 

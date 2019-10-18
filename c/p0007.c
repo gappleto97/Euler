@@ -18,12 +18,12 @@ namespace c::p0007 {
 
 
 int main(int argc, char const *argv[])  {
-    unsigned int answer, count = 0;
+    unsigned long long answer, count = 0;
     prime_sieve ps = prime_sieve0();
     while (!ps.exhausted)   {
-        answer = next(ps);
+        answer = (unsigned long long) next(ps);
         if (++count == 10001)  {
-            printf("%u", answer);
+            printf("%llu", answer);
             break;
         }
     }
