@@ -1196,17 +1196,16 @@ BCD_int add_bcd(const BCD_int x, const BCD_int y)   {
     if (cmp_bcd(abs_bcd(x, true), abs_bcd(y, true)) == LESS_THAN)  // remember this compares absolute values
         return add_bcd(y, x);
         // this lets us have x be constant
-    const size_t min_digits = min(x.bcd_digits, y.bcd_digits), max_digits = max(x.bcd_digits, y.bcd_digits);
     BCD_int z = (BCD_int) {
         .negative = x.negative,  // we know this is also y.negative
-        .data = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * (max_digits + 1)),  // in case of final overflow
+        .data = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * (x.bcd_digits + 1)),  // in case of final overflow
     };
     if (unlikely(z.data == NULL))
         return bcd_error(NO_MEM, NO_MEM);
     size_t i;
     uint8_t overflow = false;  // note that it's only ever set to 0 or 1, but assembly complains if bool is specified
     packed_BCD_pair a, b, c;
-    for (i = 0; i < min_digits; i++) {
+    for (i = 0; i < y.bcd_digits; i++)  {
         a = x.data[i];
         b = y.data[i];
         if (!(overflow || a))   {
@@ -1257,7 +1256,7 @@ BCD_int add_bcd(const BCD_int x, const BCD_int y)   {
             }
         z.data[i] = c;
     }
-    for (; i < max_digits; i++) {  // while there's overflow and digits, continue adding
+    for (; i < x.bcd_digits; i++)   {  // while there's overflow and digits, continue adding
         a = x.data[i] + overflow;
         if ((a & 0x0F) == 0x0A)  // since all that's left is overflow, we don't need to check ranges
             a += 0x06;
@@ -1265,15 +1264,15 @@ BCD_int add_bcd(const BCD_int x, const BCD_int y)   {
             a += 0x60;
         z.data[i] = a;
     }
-    if (i < max_digits)  // if there's no more overflow, but still digits left, copy directly
-        memcpy(z.data + i, x.data + i, max_digits - i);
-    z.bcd_digits = max_digits + overflow;
-    if ((z.data[max_digits] = overflow))
-        z.decimal_digits = max_digits * 2 + 1;
-    else if (z.data[max_digits - 1] & 0xF0)
-        z.decimal_digits = max_digits * 2;
+    if (i < x.bcd_digits)  // if there's no more overflow, but still digits left, copy directly
+        memcpy(z.data + i, x.data + i, x.bcd_digits - i);
+    z.bcd_digits = x.bcd_digits + overflow;
+    if ((z.data[x.bcd_digits] = overflow))
+        z.decimal_digits = x.bcd_digits * 2 + 1;
+    else if (z.data[x.bcd_digits - 1] & 0xF0)
+        z.decimal_digits = x.bcd_digits * 2;
     else
-        z.decimal_digits = max_digits * 2 - 1;
+        z.decimal_digits = x.bcd_digits * 2 - 1;
     z.even = !(z.data[0] % 2);
     return z;
 }
@@ -1299,9 +1298,8 @@ BCD_int sub_bcd(const BCD_int x, const BCD_int y)   {
     if ((x.negative && cmp == GREATER_THAN) || (!x.negative && cmp == LESS_THAN))
         return opp_bcd(sub_bcd(y, x), true);
         // it's easier to do this than it is to properly handle 10s complement math
-    const size_t min_digits = min(x.bcd_digits, y.bcd_digits), max_digits = max(x.bcd_digits, y.bcd_digits);
     BCD_int z = (BCD_int) {
-        .data = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * max_digits),
+        .data = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * x.bcd_digits),
         .negative = x.negative,  // remember this is the same as y.negative, and that |y| is less than |x|
     };
     if (unlikely(z.data == NULL))
@@ -1309,7 +1307,7 @@ BCD_int sub_bcd(const BCD_int x, const BCD_int y)   {
     bool carry = false;
     size_t i;
     packed_BCD_pair a, b, c;
-    for (i = 0; i < min_digits; i++) {
+    for (i = 0; i < y.bcd_digits; i++)  {
         a = x.data[i];
         b = y.data[i];
         b += carry;  // incorporate carry from last pair
@@ -1320,7 +1318,7 @@ BCD_int sub_bcd(const BCD_int x, const BCD_int y)   {
                 // brackets indicate a C symbol is referenced rather than a register
                 __asm   {
                     mov al, [a];         // move C symbol a to register al
-                    sub al, [b];         // add C symbol b to register al
+                    sub al, [b];         // subtract C symbol b from register al
                     das;                 // have the CPU make sure register al contains valid, packed BCD digits
                     setc [carry];        // set C symbol carry to contain the carry bit, set by daa
                     mov [c], al;         // move register al to C symbol c
@@ -1330,7 +1328,7 @@ BCD_int sub_bcd(const BCD_int x, const BCD_int y)   {
                 // note that the syntax here is: op [[src, ] dest]
                 // %\d indicates a C symbol is referenced, see the lookups at the end of code for which
                 __asm__(
-                    "sub %3, %%al;"  // add the register containing b to al
+                    "sub %3, %%al;"  // subtract the register containing b from al
                     "das;"           // have the CPU make sure register al contains valid, packed BCD digits
                     "setc %1;"       // set the register containing carry to hold the carry bit, set by daa
                                      // this next section tells the compiler what to do after execution
@@ -1357,7 +1355,7 @@ BCD_int sub_bcd(const BCD_int x, const BCD_int y)   {
         #endif
         z.data[i] = c;
     }
-    for (; carry && i < max_digits; i++) {  // while there's carry and digits, continue adding
+    for (; carry && i < x.bcd_digits; i++)  {  // while there's carry and digits, continue adding
         a = x.data[i] - carry;
         if ((a & 0x0F) == 0x0F)  // since all that's left is carry, we don't need to check ranges
             a -= 0x06;
@@ -1365,9 +1363,9 @@ BCD_int sub_bcd(const BCD_int x, const BCD_int y)   {
             a -= 0x60;
         z.data[i] = a;
     }
-    if (i < max_digits)  // if there's no more carry, but still digits left, copy directly
-        memcpy(z.data + i, x.data + i, max_digits - i);
-    i = max_digits;
+    if (i < x.bcd_digits)  // if there's no more carry, but still digits left, copy directly
+        memcpy(z.data + i, x.data + i, x.bcd_digits - i);
+    i = x.bcd_digits;
     while (--i != -1)   {
         if (z.data[i])    {
             z.bcd_digits = i + 1;
