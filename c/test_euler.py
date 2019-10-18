@@ -123,7 +123,9 @@ else:
 if not compilers:
     raise RuntimeError("No compilers detected!")
 
+valgrind_compilers = [x for x in compilers if x != 'CL']
 COMPILER_LEN = len(max(compilers, key=len))  # make sure compiler fixtures are evenly spaced
+V_COMPILER_LEN = len(max(valgrind_compilers, key=len))
 BUILD_FOLDER.mkdir(parents=True, exist_ok=True)
 CL_NO_64 = False
 if 'CL' in compilers:
@@ -185,7 +187,7 @@ def cleanup():
         rmtree(BUILD_FOLDER)
 
 
-@fixture(params=sorted(x.ljust(COMPILER_LEN) for x in compilers if x not in ('CL', 'PCC')))
+@fixture(params=sorted(x.ljust(V_COMPILER_LEN) for x in valgrind_compilers))
 def v_compiler(request):  # type: ignore
     return request.param.strip()
 
@@ -292,11 +294,13 @@ def test_problem(benchmark, key, compiler):
         fail_func("Exceeding 60s! (Max={:.6}s, Median={:.6}s)".format(stats.max, stats.median))
 
 
-if which('valgrind'):
-    def test_valgrind(key, v_compiler):
+if which('valgrind') and valgrind_compilers:
+    def test_valgrind(c_file, v_compiler):
         if (NO_SLOW and key in known_slow) or (ONLY_SLOW and key not in known_slow) or NO_OPTIONAL_TESTS:
             skip()
-        filename = SOURCE_TEMPLATE.format(key)
-        exe_name = EXE_TEMPLATE.format(key, 'valgrind.' + v_compiler)  # need to have both to keep name unique
-        check_call(templates['debug'][v_compiler].format(filename, exe_name).split())
-        check_output(['valgrind', '--error-exitcode=1', '--leak-check=yes', '--show-error-list=yes', exe_name], cwd=BUILD_FOLDER)
+        exe_name = EXE_TEMPLATE.format("valgrind-{}".format(uuid4()), v_compiler)
+        check_call(templates['debug'][v_compiler].format(c_file, exe_name).split())
+        check_output(
+            ['valgrind', '--error-exitcode=1', '--leak-check=yes', '--show-error-list=yes', exe_name],
+            cwd=BUILD_FOLDER
+        )
