@@ -15,3 +15,5 @@ js%:
 doxygen:
 	doxygen doxygen.cfg
 
+doxygen-server: doxygen
+	cd docs/html && $(PY) -m http.server -b localhost
