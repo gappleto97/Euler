@@ -304,7 +304,6 @@ uintmax_t advance_prime_factor_counter(prime_factor_counter *pfc)  {
  * The base constructor for the prime factors iterator
  * @param n The non-zero number you wish to factor
  * @memberof prime_factor_counter
- * @private
  * @attention
  * If you put in 0, behaviour is undefined
  */
