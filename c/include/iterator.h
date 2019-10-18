@@ -41,7 +41,7 @@ namespace c::include::iterator {
  * @endcode
  */
 #define IteratorTail(return_type, struct_type) \
-    return_type (*const iterator_function)(struct_type *it); /**< @private The pointer to the iteration function @see next @cond EXPAND_ITERATOR_TAIL */\
+    return_type (*const iterator_function)(struct_type *it); /**< @private The pointer to the iteration function @see next */\
     void (*const destructor)(struct_type *it); /**< @private The pointer to the destructor function @see free_iterator @cond EXPAND_ITERATOR_TAIL */\
     bool exhausted : 1;\
     bool started : 1;\
