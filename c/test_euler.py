@@ -308,12 +308,15 @@ def test_problem(benchmark, key, compiler):
 
 
 if which('valgrind') and valgrind_compilers:
+    VALGRIND_ERR_LIST = not run(['valgrind', '-s']).returncode
+
     def test_valgrind(c_file, v_compiler):
         if (NO_SLOW and key in known_slow) or (ONLY_SLOW and key not in known_slow) or NO_OPTIONAL_TESTS:
             skip()
         exe_name = EXE_TEMPLATE.format("valgrind-{}".format(uuid4()), v_compiler)
         check_call(templates['debug'][v_compiler].format(c_file, exe_name).split())
-        check_output(
-            ['valgrind', '--error-exitcode=1', '--leak-check=yes', '--show-error-list=yes', exe_name],
-            cwd=BUILD_FOLDER
-        )
+        if VALGRIND_ERR_LIST:
+            args = ['valgrind', '--error-exitcode=1', '--leak-check=yes', '-s', exe_name]
+        else:
+            args = ['valgrind', '--error-exitcode=1', '--leak-check=yes', exe_name]
+        check_output(args, cwd=BUILD_FOLDER)
