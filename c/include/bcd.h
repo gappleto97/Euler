@@ -9,8 +9,8 @@
 #include <string.h>
 #include "macros.h"
 
-    #include <stdlib.h>
-    #include <math.h>
+#include <stdlib.h>
+#include <math.h>
 
 #ifdef DOXYGEN
 namespace c::include::bcd {
@@ -128,6 +128,7 @@ const BCD_int BCD_nan = {
 /**
  * if x is not constant, this sets all flags to 0, frees used memory, sets nan to true, and error to @ref IS_FREED
  * @param x the @ref BCD_int you would like to destruct
+ * @memberof BCD_int
  * @remark
  * This will take \f$Θ(1)\f$ time if x is constant, and will match the time of free() if not. It is assumed in other
  * time analyses that this function takes constant time, but note that that may not be true in every C implementation.
@@ -149,9 +150,10 @@ void free_BCD_int(BCD_int *const x);
 
 /**
  * @param[in] a The C integer you would like to convert to a @ref BCD_int
+ * @return The @ref BCD_int representation of a
+ * @memberof BCD_int
  * @attention
  * All constructors may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
- * @return The @ref BCD_int representation of a
  * @remark
  * This will take \f$Θ(\log_{100}(a))\f$ time, but for most purposes you can treat it as \f$O(1)\f$
  */
@@ -160,9 +162,10 @@ BCD_int new_BCD_int1(const intmax_t a);
 /**
  * @param[in] a The C integer you would like to convert to a @ref BCD_int
  * @param[in] negative The sign of the C integer
+ * @return The @ref BCD_int representation of a
+ * @memberof BCD_int
  * @attention
  * All constructors may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
- * @return The @ref BCD_int representation of a
  * @remark
  * This will take \f$Θ(\log_{100}(a))\f$ time, but for most purposes you can treat it as \f$O(1)\f$
  */
@@ -170,9 +173,10 @@ BCD_int new_BCD_int2(uintmax_t a, const bool negative);
 
 /**
  * @param[in] a The @ref BCD_int you would like to copy
+ * @return A copy of a
+ * @memberof BCD_int
  * @attention
  * All constructors may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
- * @return A copy of a
  * @remark
  * This will take \f$Θ(\log_{100}(a))\f$ time
  */
@@ -184,6 +188,7 @@ BCD_int copy_BCD_int(BCD_int a);
  * @param[in] negative The sign you would like to apply to the resulting @ref BCD_int
  * @param[in] little_endian The byte order of the fed data (little endian is preferred)
  * @return A @ref BCD_int representation of the given data
+ * @memberof BCD_int
  * @remark
  * This will take \f$Θ(\texttt{chars})\f$ time, though it should be noted that little endian data will run significantly faster
  * @attention
@@ -196,6 +201,7 @@ BCD_int BCD_from_bytes(const unsigned char *const str, const size_t chars, const
  * @param[in] digits The number of digits
  * @param[in] negative The sign you would like to apply to the resulting @ref BCD_int
  * @return A @ref BCD_int representation of the given data
+ * @memberof BCD_int
  * @remark
  * This will take \f$Θ(\texttt{digits})\f$ time
  * @attention
@@ -208,6 +214,7 @@ BCD_int BCD_from_ascii(const char *const str, const size_t digits, const bool ne
  * @param[in] error The operation which generated the current error
  * @param[in] orig_error The operation which initially started generating errors
  * @return A @ref BCD_nan "NaN" value which has the associated error codes
+ * @memberof BCD_int
  * @remark
  * This will take \f$Θ(1)\f$ time
  * @attention
@@ -227,28 +234,11 @@ BCD_int bcd_error(const BCD_error error, const BCD_error orig_error);
  */
 
 /**
- * @brief Get the truth value of a @ref BCD_int without relying on internals
- * @param[in] x The @ref BCD_int in question
- * @return A bool indicating if the @ref BCD_int is non-zero
- * @remark
- * This will take \f$Θ(1)\f$ time
- */
-bool bool_bcd(const BCD_int x);
-
-/**
- * @brief Get the logical not of a @ref BCD_int without relying on internals
- * @param[in] x The @ref BCD_int in question
- * @return A bool indicating if the @ref BCD_int is zero
- * @remark
- * This will take \f$Θ(1)\f$ time
- */
-bool not_bcd(const BCD_int x);
-
-/**
  * @brief Compare two @ref BCD_int "BCD_ints"
  * @param[in] x The left-hand @ref BCD_int
  * @param[in] y The right-hand @ref BCD_int
  * @return An @ref comp_t reflecting the comparison
+ * @memberof BCD_int
  * @retval @ref EQUAL_TO
  * @retval @ref GREATER_THAN
  * @retval @ref LESS_THAN
@@ -266,8 +256,9 @@ comp_t cmp_bcd(const BCD_int x, const BCD_int y);
  * @param[in] no_copy If false, this function returns a modified copy of x instead of a modified version of x
  * @param[in] negative The sign you would like to apply
  * @return Either a modified copy of x or a modified version of x
+ * @memberof BCD_int
  * @remark
- * This will take \f$Θ(1)\f$ time if no_copy is true, and \f$Θ(\log_{100}(x))\f$ if it is false.
+ * This will take \f$Θ(1)\f$ time if @c no_copy is true, and \f$Θ(\log_{100}(x))\f$ if it is false.
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM (avoid with no_copy)
  * @attention
@@ -280,68 +271,73 @@ BCD_int sign_bcd(BCD_int x, const bool no_copy, const bool negative);
  * @param[in] x The @ref BCD_int in question
  * @param[in] no_copy If false, this function returns a modified copy of x instead of a modified version of x
  * @return Either a positive copy of x or a positive version of x
+ * @memberof BCD_int
  * @remark
- * This will take \f$Θ(1)\f$ time if no_copy is true, and \f$Θ(\log_{100}(x))\f$ if it is false.
+ * This will take \f$Θ(1)\f$ time if @c no_copy is true, and \f$Θ(\log_{100}(x))\f$ if it is false.
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM (avoid with no_copy)
  * @attention
  * All operators that return a @ref BCD_int will return @ref BCD_nan "NaN" if fed @ref BCD_nan "NaN", and set error to @ref BCD_error "{OP}_NAN".
  * @see sign_bcd
  */
-BCD_int abs_bcd(BCD_int x, const bool no_copy);
+BCD_int abs_bcd(const BCD_int x, const bool no_copy);
 
 /**
  * @brief Get the negative absolute value of a @ref BCD_int without relying on internals
  * @param[in] x The @ref BCD_int in question
  * @param[in] no_copy If false, this function returns a modified copy of x instead of a modified version of x
  * @return Either a negative copy of x or a negative version of x
+ * @memberof BCD_int
  * @remark
- * This will take \f$Θ(1)\f$ time if no_copy is true, and \f$Θ(\log_{100}(x))\f$ if it is false.
+ * This will take \f$Θ(1)\f$ time if @c no_copy is true, and \f$Θ(\log_{100}(x))\f$ if it is false.
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM (avoid with no_copy)
  * @attention
  * All operators that return a @ref BCD_int will return @ref BCD_nan "NaN" if fed @ref BCD_nan "NaN", and set error to @ref BCD_error "{OP}_NAN".
  * @see sign_bcd
  */
-BCD_int neg_bcd(BCD_int x, const bool no_copy);
+BCD_int neg_bcd(const BCD_int x, const bool no_copy);
 
 /**
  * @brief Get the opposite value of a @ref BCD_int without relying on internals
  * @param[in] x The @ref BCD_int in question
  * @param[in] no_copy If false, this function returns a modified copy of x instead of a modified version of x
  * @return Either an opposite copy of x or an opposite version of x
+ * @memberof BCD_int
  * @remark
- * This will take \f$Θ(1)\f$ time if no_copy is true, and \f$Θ(\log_{100}(x))\f$ if it is false.
+ * This will take \f$Θ(1)\f$ time if @c no_copy is true, and \f$Θ(\log_{100}(x))\f$ if it is false.
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM (avoid with no_copy)
  * @attention
  * All operators that return a @ref BCD_int will return @ref BCD_nan "NaN" if fed @ref BCD_nan "NaN", and set error to @ref BCD_error "{OP}_NAN".
  * @see sign_bcd
  */
-BCD_int opp_bcd(BCD_int x, const bool no_copy);
+BCD_int opp_bcd(const BCD_int x, const bool no_copy);
 
 /**
  * @brief Add two @ref BCD_int "BCD_ints"
  * @param[in] x The left-hand @ref BCD_int
  * @param[in] y The right-hand @ref BCD_int
  * @return A @ref BCD_int reflecting the sum of the arguments
+ * @memberof BCD_int
  * @remark
  * This will take \f$O(\log_{100}(max(x, y)))\f$ time
  * @note
  * Implementation details:
  * @note
- * This function works closely with @ref add_bcd.
+ * This function works closely with @ref sub_bcd. If absolute value would go down from this operation, it is handed off to that method.
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
  * All operators that return a @ref BCD_int will return @ref BCD_nan "NaN" if fed @ref BCD_nan "NaN", and set error to @ref BCD_error "{OP}_NAN".
  */
-BCD_int add_bcd(BCD_int x, const BCD_int y);
+BCD_int add_bcd(const BCD_int x, const BCD_int y);
 
 /**
  * @brief Increment a @ref BCD_int
  * @param[in] x The @ref BCD_int to increment
  * @return A @ref BCD_int one greater than x
+ * @memberof BCD_int
  * @remark
  * This will take \f$Θ(\log_{100}(x))\f$ time
  * @attention
@@ -357,23 +353,25 @@ BCD_int inc_bcd(const BCD_int x);
  * @param[in] x The left-hand @ref BCD_int
  * @param[in] y The right-hand @ref BCD_int
  * @return A @ref BCD_int reflecting the difference of the arguments
+ * @memberof BCD_int
  * @remark
  * This will take \f$O(\log_{100}(max(x, y)))\f$ time
  * @note
  * Implementation details:
  * @note
- * This function works closely with @ref add_bcd.
+ * This function works closely with @ref add_bcd.  If absolute value would go up from this operation, it is handed off to that method.
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
  * All operators that return a @ref BCD_int will return @ref BCD_nan "NaN" if fed @ref BCD_nan "NaN", and set error to @ref BCD_error "{OP}_NAN".
  */
-BCD_int sub_bcd(BCD_int x, const BCD_int y);
+BCD_int sub_bcd(const BCD_int x, const BCD_int y);
 
 /**
  * @brief Decrement a @ref BCD_int
  * @param[in] x The @ref BCD_int to decrement
  * @return A @ref BCD_int one less than x
+ * @memberof BCD_int
  * @remark
  * This will take \f$Θ(\log_{100}(x))\f$ time
  * @attention
@@ -389,6 +387,7 @@ BCD_int dec_bcd(const BCD_int x);
  * @param[in] x The left-hand @ref BCD_int
  * @param[in] y The right-hand @ref BCD_int
  * @return A @ref BCD_int reflecting the product of the arguments
+ * @memberof BCD_int
  * @remark
  * This will take \f$Θ(\log_{100}(x) \cdot \log_{100}(y) \cdot \log{100}(xy))\f$ time if x and y are neither
  * @ref NaN "BCD_nan" nor zero. Otherwise it takes \f$Θ(1)\f$ time. For most purposes this can be simplified to
@@ -405,6 +404,7 @@ BCD_int mul_bcd(const BCD_int x, const BCD_int y);
  * @param[in] x The left-hand @ref BCD_int
  * @param[in] y The right-hand @ref BCD_int
  * @return A @ref BCD_int reflecting the quotient of the arguments
+ * @memberof BCD_int
  * @remark
  * This function has three behaviors for performance analysis
  * @remark
@@ -425,6 +425,7 @@ BCD_int div_bcd(const BCD_int x, const BCD_int y);
  * @param[in] x The left-hand @ref BCD_int
  * @param[in] y The right-hand @ref BCD_int
  * @return A @ref BCD_int reflecting the remainder of the arguments
+ * @memberof BCD_int
  * @remark
  * This function has two behaviors for performance analysis
  * @remark
@@ -445,6 +446,7 @@ BCD_int mod_bcd(const BCD_int x, const BCD_int y);
  * @param[in] y The right-hand @ref BCD_int
  * @param[out] mod A pointer to the @ref BCD_int you would like to store the remainder
  * @return A @ref BCD_int reflecting the quotient of the arguments
+ * @memberof BCD_int
  * @remark
  * This function has three behaviors for performance analysis
  * @remark
@@ -465,6 +467,7 @@ BCD_int divmod_bcd(const BCD_int x, BCD_int y, BCD_int *mod);
  * @param[in] x The left-hand @ref BCD_int
  * @param[in] y The right-hand @ref BCD_int
  * @return A @ref BCD_int reflecting the yth power of x
+ * @memberof BCD_int
  * @remark
  * This will take \f$Θ(y \cdot \log_{100}(x)^3)\f$ time if x and y are not @ref NaN "BCD_nan" and y is positive.
  * Otherwise it takes \f$Θ(1)\f$ time.
@@ -473,7 +476,7 @@ BCD_int divmod_bcd(const BCD_int x, BCD_int y, BCD_int *mod);
  * @attention
  * All operators that return a @ref BCD_int will return @ref BCD_nan "NaN" if fed @ref BCD_nan "NaN", and set error to @ref BCD_error "{OP}_NAN".
  * @attention
- * Returns @ref BCD_nan "NaN" with error set to @ref POW_NEG if y < 0
+ * Returns @ref BCD_nan "NaN" with error set to @ref POW_NEG if y < 0 or x = 0
  */
 BCD_int pow_bcd(const BCD_int x, const BCD_int y);
 
@@ -481,6 +484,7 @@ BCD_int pow_bcd(const BCD_int x, const BCD_int y);
  * @brief Get the factorial of x
  * @param[in] x The @ref BCD_int in question
  * @return A @ref BCD_int reflecting the factorial of x
+ * @memberof BCD_int
  * @remark
  * This will take \f$O(x \cdot \log_{100}(x!)^3)\f$ time if x is not @ref NaN "BCD_nan" and is non-negative.
  * Otherwise it takes \f$Θ(1)\f$ time.
@@ -507,6 +511,7 @@ BCD_int factorial_bcd(const BCD_int x);
  * @brief Change the sign of a @ref BCD_int without relying on internals
  * @param[in,out] x The @ref BCD_int in question
  * @param[in] negative The sign you would like to apply
+ * @memberof BCD_int
  * @remarks
  * This function runs takes \f$Θ(1)\f$ time
  * @attention
@@ -519,6 +524,7 @@ void isign_bcd(BCD_int *const x, const bool negative);
 /**
  * @brief Get the absolute value of a @ref BCD_int without relying on internals
  * @param[in,out] x The @ref BCD_int in question
+ * @memberof BCD_int
  * @remarks
  * This function runs takes \f$Θ(1)\f$ time
  * @attention
@@ -531,6 +537,7 @@ void iabs_bcd(BCD_int *const x);
 /**
  * @brief Get the negative absolute value of a @ref BCD_int without relying on internals
  * @param[in,out] x The @ref BCD_int in question
+ * @memberof BCD_int
  * @remarks
  * This function runs takes \f$Θ(1)\f$ time
  * @attention
@@ -543,6 +550,7 @@ void ineg_bcd(BCD_int *const x);
 /**
  * @brief Get the opposite value of a @ref BCD_int without relying on internals
  * @param[in,out] x The @ref BCD_int in question
+ * @memberof BCD_int
  * @remarks
  * This function runs takes \f$Θ(1)\f$ time
  * @attention
@@ -556,6 +564,7 @@ void iopp_bcd(BCD_int *const x);
  * @brief Add two @ref BCD_int "BCD_ints" and assign the result to x
  * @param[in,out] x The left-hand @ref BCD_int
  * @param[in] y The right-hand @ref BCD_int
+ * @memberof BCD_int
  * @see add_bcd
  * for performance analysis
  * @attention
@@ -568,6 +577,7 @@ void iadd_bcd(BCD_int *const x, const BCD_int y);
 /**
  * @brief Increment a @ref BCD_int and assign the result to x
  * @param[in,out] x The left-hand @ref BCD_int
+ * @memberof BCD_int
  * @see inc_bcd
  * for performance analysis
  * @attention
@@ -581,6 +591,7 @@ void iinc_bcd(BCD_int *const x);
  * @brief Subtract two @ref BCD_int "BCD_ints" and assign the result to x
  * @param[in,out] x The left-hand @ref BCD_int
  * @param[in] y The right-hand @ref BCD_int
+ * @memberof BCD_int
  * @see sub_bcd
  * for performance analysis
  * @attention
@@ -593,6 +604,7 @@ void isub_bcd(BCD_int *const x, const BCD_int y);
 /**
  * @brief Decrement a @ref BCD_int and assign the result to x
  * @param[in,out] x The left-hand @ref BCD_int
+ * @memberof BCD_int
  * @see dec_bcd
  * for performance analysis
  * @attention
@@ -606,6 +618,7 @@ void idec_bcd(BCD_int *const x);
  * @brief Multiply two @ref BCD_int "BCD_ints" and assign the result to x
  * @param[in,out] x The left-hand @ref BCD_int
  * @param[in] y The right-hand @ref BCD_int
+ * @memberof BCD_int
  * @see mul_bcd
  * for performance analysis
  * @attention
@@ -619,6 +632,7 @@ void imul_bcd(BCD_int *const x, const BCD_int y);
  * @brief Divide two @ref BCD_int "BCD_ints" and assign the result to x
  * @param[in,out] x The left-hand @ref BCD_int
  * @param[in] y The right-hand @ref BCD_int
+ * @memberof BCD_int
  * @see div_bcd
  * for performance analysis
  * @attention
@@ -634,6 +648,7 @@ void idiv_bcd(BCD_int *const x, const BCD_int y);
  * @brief Modulo divide two @ref BCD_int "BCD_ints" and assign the result to x
  * @param[in,out] x The left-hand @ref BCD_int
  * @param[in] y The right-hand @ref BCD_int
+ * @memberof BCD_int
  * @see mod_bcd
  * for performance analysis
  * @attention
@@ -649,6 +664,7 @@ void imod_bcd(BCD_int *const x, const BCD_int y);
  * @brief Divide two @ref BCD_int "BCD_ints" then assign the quotient to x and remainder to y
  * @param[in,out] x The left-hand @ref BCD_int
  * @param[in,out] y The right-hand @ref BCD_int
+ * @memberof BCD_int
  * @see divmod_bcd
  * for performance analysis
  * @attention
@@ -664,6 +680,7 @@ void idivmod_bcd(BCD_int *const x, BCD_int *const y);
  * @brief Raise x to the power of y then assign the result to x
  * @param[in,out] x The left-hand @ref BCD_int
  * @param[in] y The right-hand @ref BCD_int
+ * @memberof BCD_int
  * @see pow_bcd
  * for performance analysis
  * @attention
@@ -678,6 +695,7 @@ void ipow_bcd(BCD_int *const x, const BCD_int y);
 /**
  * @brief Get the factorial of x then assign the result to x
  * @param[in,out] x The @ref BCD_int in question
+ * @memberof BCD_int
  * @see factorial_bcd
  * for performance analysis
  * @attention
@@ -704,6 +722,7 @@ void ifactorial_bcd(BCD_int *const x);
  * @brief Attempt to get the C-style absolute value of x
  * @param[in] x The @ref BCD_int in question
  * @return Either the value of x OR -1 if x is @ref BCD_nan "NaN" or |x| would overflow
+ * @memberof BCD_int
  * @remark
  * While this function techincally takes \f$O(\log_{100}(x))\f$ time, x is limited on most systems to 64-bit
  * values, so this function essentially runs in constant time (\f$Θ(1)\f$).
@@ -714,6 +733,7 @@ uintmax_t abs_bcd_cuint(const BCD_int x);
  * @brief Attempt to get the C-style signed representation of x
  * @param[in] x The @ref BCD_int in question
  * @return Either the value of x OR INTMAX_MIN if x is @ref BCD_nan "NaN" or |x| would overflow
+ * @memberof BCD_int
  * @remark
  * While this function techincally takes \f$O(\log_{100}(x))\f$ time, x is limited on most systems to 64-bit
  * values, so this function essentially runs in constant time (\f$Θ(1)\f$).
@@ -725,6 +745,7 @@ intmax_t  val_bcd_cint(const BCD_int x);
  * @param[in] x The @ref BCD_int in question
  * @param[in] y The signed integer you would like to compare with
  * @return A @ref comp_t indicating the difference between x and y
+ * @memberof BCD_int
  * @remark
  * While this function techincally takes \f$O(\log_{100}(x))\f$ time, y is limited on most systems to 64-bit
  * values, so this function essentially runs in constant time (\f$Θ(1)\f$).
@@ -738,6 +759,7 @@ comp_t cmp_bcd_cint(const BCD_int x, const intmax_t y);
  * @param[in] x The @ref BCD_int in question
  * @param[in] y The signed integer you would like to compare with
  * @return A @ref comp_t indicating the difference between x and y
+ * @memberof BCD_int
  * @remark
  * While this function techincally takes \f$O(\log_{100}(x))\f$ time, y is limited on most systems to 64-bit
  * values, so this function essentially runs in constant time (\f$Θ(1)\f$).
@@ -751,6 +773,7 @@ comp_t cmp_bcd_cuint(const BCD_int x, const uintmax_t y);
  * @param[in] x The @ref BCD_int in question
  * @param[in] y The C-style integer to multiply by
  * @return The product of x and y
+ * @memberof BCD_int
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
@@ -763,6 +786,7 @@ BCD_int mul_bcd_cint(const BCD_int x, const intmax_t y);
  * @param[in] x The @ref BCD_int in question
  * @param[in] y The C-style integer to multiply by
  * @return The product of x and y
+ * @memberof BCD_int
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
@@ -775,10 +799,9 @@ BCD_int mul_bcd_cuint(const BCD_int x, uintmax_t y);
  * @param[in] x The @ref BCD_int you'd like to multiply
  * @param[in] tens The power of ten to multiply by (in the form of \f$(10^{\texttt{tens}})\f$)
  * @return The result of \f$(x \cdot 10^{\texttt{tens}})\f$
+ * @memberof BCD_int
  * @remark
  * This function takes \f$Θ(\log_{100}(x))\f$ time
- * @bug
- * This function currently over-allocates memory by one byte. That makes me think I have an off-by-one error when @c tens is odd. It needs further investigation.
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
@@ -791,6 +814,7 @@ BCD_int mul_bcd_pow_10(const BCD_int x, const size_t tens);
  * @param[in] a The @ref BCD_int you'd like to multiply
  * @param[in] tens The power of ten to multiply by (in the form of \f$(10^{\texttt{tens}})\f$)
  * @return The result of \f$(x \cdot 10^{\texttt{tens}})\f$
+ * @memberof BCD_int
  * @remark
  * This function takes \f$Θ(\log_{100}(x))\f$ time
  * @attention
@@ -807,6 +831,7 @@ BCD_int shift_bcd_left(const BCD_int a, const size_t tens);
  * @param[in] x The @ref BCD_int you'd like to divide
  * @param[in] tens The power of ten to divide by (in the form of \f$(10^{\texttt{tens}})\f$)
  * @return The result of \f$(x \div 10^{\texttt{tens}})\f$
+ * @memberof BCD_int
  * @remark
  * This function takes \f$Θ(\log_{100}(x))\f$ time
  * @attention
@@ -821,6 +846,7 @@ BCD_int div_bcd_pow_10(const BCD_int x, const size_t tens);
  * @param[in] a The @ref BCD_int you'd like to divide
  * @param[in] tens The power of ten to divide by (in the form of \f$(10^{\texttt{tens}})\f$)
  * @return The result of \f$(x \div 10^{\texttt{tens}})\f$
+ * @memberof BCD_int
  * @remark
  * This function takes \f$Θ(\log_{100}(x))\f$ time
  * @attention
@@ -837,6 +863,7 @@ BCD_int shift_bcd_right(const BCD_int a, const size_t tens);
  * @param[in] x The base
  * @param[in] y The exponent
  * @return The yth power of x in the form of a @ref BCD_int
+ * @memberof BCD_int
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
@@ -849,6 +876,7 @@ BCD_int pow_cint_cuint(const intmax_t x, uintmax_t y);
  * @param[in] x The base
  * @param[in] y The exponent
  * @return The yth power of x in the form of a @ref BCD_int
+ * @memberof BCD_int
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
@@ -871,6 +899,7 @@ BCD_int pow_cuint_cuint(const uintmax_t x, uintmax_t y);
  * @brief Multiply in-place a @ref BCD_int by a C-style signed integer
  * @param[in,out] x The @ref BCD_int in question
  * @param[in] y The C-style integer to multiply by
+ * @memberof BCD_int
  * @see mul_bcd_cuint
  * for performance analysis
  * @attention
@@ -884,6 +913,7 @@ void imul_bcd_cint(BCD_int *const x, const intmax_t y);
  * @brief Multiply in-place a @ref BCD_int by a C-style unsigned integer
  * @param[in,out] x The @ref BCD_int in question
  * @param[in] y The C-style integer to multiply by
+ * @memberof BCD_int
  * @see mul_bcd_cuint
  * for performance analysis
  * @attention
@@ -897,6 +927,7 @@ void imul_bcd_cuint(BCD_int *const x, const uintmax_t y);
  * @brief Multiply in-place a @ref BCD_int by a power of ten
  * @param[in,out] x The @ref BCD_int in question
  * @param[in] tens The power of ten you'd like to multiply by (in the form of \f$(10^{\texttt{tens}})\f$)
+ * @memberof BCD_int
  * @see mul_bcd_pow_10
  * for performance analysis
  * @attention
@@ -910,6 +941,7 @@ void imul_bcd_pow_10(BCD_int *const x, const size_t tens);
  * @brief Multiply in-place a @ref BCD_int by a power of ten
  * @param[in,out] a The @ref BCD_int in question
  * @param[in] tens The power of ten you'd like to multiply by (in the form of \f$(10^{\texttt{tens}})\f$)
+ * @memberof BCD_int
  * @see mul_bcd_pow_10
  * for performance analysis
  * @attention
@@ -923,6 +955,7 @@ void ishift_bcd_left(BCD_int *const a, const size_t tens);
  * @brief Divide in-place a @ref BCD_int by a power of ten
  * @param[in,out] x The @ref BCD_int in question
  * @param[in] tens The power of ten you'd like to divide by (in the form of \f$(10^{\texttt{tens}})\f$)
+ * @memberof BCD_int
  * @see div_bcd_pow_10
  * for performance analysis
  * @attention
@@ -938,6 +971,7 @@ void idiv_bcd_pow_10(BCD_int *const x, const size_t tens);
  * @brief Divide in-place a @ref BCD_int by a power of ten
  * @param[in,out] a The @ref BCD_int in question
  * @param[in] tens The power of ten you'd like to divide by (in the form of \f$(10^{\texttt{tens}})\f$)
+ * @memberof BCD_int
  * @see div_bcd_pow_10
  * for performance analysis
  * @attention
@@ -973,6 +1007,7 @@ uint16_t mul_dig_pair(const packed_BCD_pair ab, const packed_BCD_pair cd);
 /**
  * @brief Print a @ref BCD_int to the screen
  * @param[in] x The @ref BCD_int you'd like to print
+ * @memberof BCD_int
  * @remarks
  * This function runs takes \f$Θ(\log_{100}(x))\f$ time
  */
@@ -981,6 +1016,7 @@ void print_bcd(const BCD_int x);
 /**
  * @brief Print a @ref BCD_int to the screen and append a newline
  * @param[in] x The @ref BCD_int you'd like to print
+ * @memberof BCD_int
  * @remarks
  * This function runs takes \f$Θ(\log_{100}(x))\f$ time
  */
@@ -1129,29 +1165,26 @@ inline bool not_bcd(const BCD_int x)    {
 }
 
 inline BCD_int sign_bcd(BCD_int x, const bool no_copy, const bool negative) {
-    if (!x.nan)
+    if (likely(!x.nan))
         x.negative = negative;
     return (no_copy) ? x : copy_BCD_int(x);
 }
 
-inline BCD_int abs_bcd(BCD_int x, const bool no_copy)   {
+inline BCD_int abs_bcd(const BCD_int x, const bool no_copy) {
     return sign_bcd(x, no_copy, false);
 }
 
-inline BCD_int neg_bcd(BCD_int x, const bool no_copy)   {
+inline BCD_int neg_bcd(const BCD_int x, const bool no_copy) {
     return sign_bcd(x, no_copy, true);
 }
 
-inline BCD_int opp_bcd(BCD_int x, const bool no_copy)   {
+inline BCD_int opp_bcd(const BCD_int x, const bool no_copy) {
     return sign_bcd(x, no_copy, !x.negative);
 }
 
-BCD_int add_bcd(BCD_int x, const BCD_int y) {
-    // performing this on two n-digit numbers will take O(n) time
+BCD_int add_bcd(const BCD_int x, const BCD_int y)   {
     if (unlikely(x.nan || y.nan))
         return bcd_error(ADD_NAN, (x.nan) ? x.orig_error : y.orig_error);
-    if (unlikely(x.zero && y.zero))
-        return BCD_zero;
     if (unlikely(x.zero))
         return copy_BCD_int(y);
     if (unlikely(y.zero))
@@ -1160,13 +1193,17 @@ BCD_int add_bcd(BCD_int x, const BCD_int y) {
         return sub_bcd(x, opp_bcd(y, true));
         // if signs don't match, absolute value would go down.
         // that means we need to flip y's sign and move through sub_bcd()
-    size_t i, min_digits = min(x.bcd_digits, y.bcd_digits), max_digits = max(x.bcd_digits, y.bcd_digits);
+    if (cmp_bcd(abs_bcd(x, true), abs_bcd(y, true)) == LESS_THAN)  // remember this compares absolute values
+        return add_bcd(y, x);
+        // this lets us have x be constant
+    const size_t min_digits = min(x.bcd_digits, y.bcd_digits), max_digits = max(x.bcd_digits, y.bcd_digits);
     BCD_int z = (BCD_int) {
         .negative = x.negative,  // we know this is also y.negative
-        .data = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * (max_digits + 1)),
+        .data = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * (max_digits + 1)),  // in case of final overflow
     };
     if (unlikely(z.data == NULL))
         return bcd_error(NO_MEM, NO_MEM);
+    size_t i;
     uint8_t overflow = false;  // note that it's only ever set to 0 or 1, but assembly complains if bool is specified
     packed_BCD_pair a, b, c;
     for (i = 0; i < min_digits; i++) {
@@ -1204,7 +1241,7 @@ BCD_int add_bcd(BCD_int x, const BCD_int y) {
                         "setc %1;"         // set the register containing overflow to hold the carry bit, set by daa
                                            // this next section tells the compiler what to do after execution
                       : "=a" (c),          // store the contents of register al in symbol c
-                        "=gmr" (overflow)  // and a general register or memory location gets assigned to symbol overflow (referenced as %1)
+                        "=rgm" (overflow)  // and a general register or memory location gets assigned to symbol overflow (referenced as %1)
                                            // then below tells the compiler what our inputs are
                       : "a" (a),           // symbol a should get dumped to register al
                         "rgm" (b)          // and symbol b in a general register or memory location (referenced as %3)
@@ -1220,9 +1257,7 @@ BCD_int add_bcd(BCD_int x, const BCD_int y) {
             }
         z.data[i] = c;
     }
-    if (x.bcd_digits < y.bcd_digits)
-        x = y;
-    for (; overflow && i < max_digits; i++) {  // while there's overflow and digits, continue adding
+    for (; i < max_digits; i++) {  // while there's overflow and digits, continue adding
         a = x.data[i] + overflow;
         if ((a & 0x0F) == 0x0A)  // since all that's left is overflow, we don't need to check ranges
             a += 0x06;
@@ -1247,27 +1282,27 @@ inline BCD_int inc_bcd(const BCD_int x) {
     return add_bcd(x, BCD_one);
 }
 
-BCD_int sub_bcd(BCD_int x, const BCD_int y) {
+BCD_int sub_bcd(const BCD_int x, const BCD_int y)   {
+    if (x.negative != y.negative)
+        return add_bcd(x, opp_bcd(y, true));
+        // if signs don't match, absolute value would go up.
+        // that means we need to flip y's sign and move through add_bcd()
     if (unlikely(x.nan || y.nan))
         return bcd_error(SUB_NAN, (x.nan) ? x.orig_error : y.orig_error);
-    if (unlikely(x.zero && y.zero))
+    const comp_t cmp = cmp_bcd(x, y);
+    if (unlikely(cmp == EQUAL_TO))
         return BCD_zero;
     if (unlikely(x.zero))
         return opp_bcd(y, false);
     if (unlikely(y.zero))
         return copy_BCD_int(x);
-    if (x.negative != y.negative)
-        return add_bcd(x, opp_bcd(y, true));
-        // if signs don't match, absolute value would go up.
-        // that means we need to flip y's sign and move through add_bcd()
-    signed char cmp = cmp_bcd(x, y);
-    bool zero = (cmp == EQUAL_TO);
-    if (unlikely(zero))
-        return BCD_zero;
+    if ((x.negative && cmp == GREATER_THAN) || (!x.negative && cmp == LESS_THAN))
+        return opp_bcd(sub_bcd(y, x), true);
+        // it's easier to do this than it is to properly handle 10s complement math
     const size_t min_digits = min(x.bcd_digits, y.bcd_digits), max_digits = max(x.bcd_digits, y.bcd_digits);
     BCD_int z = (BCD_int) {
-        .negative = (cmp == -1),
         .data = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * max_digits),
+        .negative = x.negative,  // remember this is the same as y.negative, and that |y| is less than |x|
     };
     if (unlikely(z.data == NULL))
         return bcd_error(NO_MEM, NO_MEM);
@@ -1295,28 +1330,33 @@ BCD_int sub_bcd(BCD_int x, const BCD_int y) {
                 // note that the syntax here is: op [[src, ] dest]
                 // %\d indicates a C symbol is referenced, see the lookups at the end of code for which
                 __asm__(
-                    "sub %3, %%al;"    // add the register containing b to al
-                    "das;"             // have the CPU make sure register al contains valid, packed BCD digits
-                    "setc %1;"         // set the register containing carry to hold the carry bit, set by daa
-                                        // this next section tells the compiler what to do after execution
-                    : "=a" (c),          // store the contents of register al in symbol c
-                    "=rgm" (carry)     // and a general register or memory location gets assigned to symbol carry (referenced as %1)
-                                        // then below tells the compiler what our inputs are
-                    : "a" (a),           // symbol a should get dumped to register al
-                    "rgm" (b)          // and symbol b in a general register or memory location (referenced as %3)
+                    "sub %3, %%al;"  // add the register containing b to al
+                    "das;"           // have the CPU make sure register al contains valid, packed BCD digits
+                    "setc %1;"       // set the register containing carry to hold the carry bit, set by daa
+                                     // this next section tells the compiler what to do after execution
+                    : "=a" (c),      // store the contents of register al in symbol c
+                    "=rgm" (carry)   // and a general register or memory location gets assigned to symbol carry (referenced as %1)
+                                     // then below tells the compiler what our inputs are
+                    : "a" (a),       // symbol a should get dumped to register al
+                    "rgm" (b)        // and symbol b in a general register or memory location (referenced as %3)
                 );
             #endif
-        #else  // otherwise fall back to doing it in C
-            c = a - b;                        // set c to be the result of (a - b) % 0x100
-            if ((carry = (c & 0xF0) > 0x99))  // if c would overflow the decimal range
-                c -= 0x60;                    // and subtract 0x60 to make a decimal digit
-            if ((c & 0x0F) > 9)               // if the lower nibble be bigger than 9
-                c -= 0x06;                    // subtract 6 to make a decimal digit
+        #else  // otherwise fall back to doing it in C. the code below should replicate the DAS x86 instruction
+            const uint8_t old_c = c = a - b;
+            const bool AF = ((int8_t) (a & 0x0F) - (b & 0x0F)) < 0;  // this is to replicate the x86 AF flag
+            const bool old_carry = ((int16_t) a - b) < 0;
+            carry = false;
+            if (AF || ((c & 0x0F) > 0x09))  {  // if the lower nibble borrowed, or it's greater than 9
+                carry = old_carry || (((int16_t) c - 0x06) < 0);
+                c -= 0x06;
+            }
+            if (old_carry || (old_c > 0x99))    {  // if the initial subtraction carried, or the original value overflowed
+                carry = true;
+                c -= 0x60;
+            }
         #endif
         z.data[i] = c;
     }
-    if (x.bcd_digits < y.bcd_digits)
-        x = y;
     for (; carry && i < max_digits; i++) {  // while there's carry and digits, continue adding
         a = x.data[i] - carry;
         if ((a & 0x0F) == 0x0F)  // since all that's left is carry, we don't need to check ranges
@@ -1327,6 +1367,7 @@ BCD_int sub_bcd(BCD_int x, const BCD_int y) {
     }
     if (i < max_digits)  // if there's no more carry, but still digits left, copy directly
         memcpy(z.data + i, x.data + i, max_digits - i);
+    i = max_digits;
     while (--i != -1)   {
         if (z.data[i])    {
             z.bcd_digits = i + 1;
@@ -1395,30 +1436,34 @@ BCD_int divmod_bcd(const BCD_int x, BCD_int y, BCD_int *mod)    {
             orig_error = x.orig_error;
         else if (y.nan)
             orig_error = y.orig_error;
-        return (*mod = bcd_error(error, orig_error));
-    }
-    if (unlikely(x.zero))   {
-        *mod = BCD_zero;
+        div = bcd_error(error, orig_error);
+        if (mod != NULL)
+            *mod = div;
         return div;
     }
-    if (x.decimal_digits == 1 && x.data[0] == 1)  {
-        *mod = BCD_zero;
+    if (unlikely(x.zero))   {
+        if (mod != NULL)
+            *mod = BCD_zero;
+        return div;
+    }
+    if (y.decimal_digits == 1 && y.data[0] == 1)  {
+        if (mod != NULL)
+            *mod = BCD_zero;
         return sign_bcd(copy_BCD_int(x), true, x.negative != y.negative);
     }
-    bool x_negative = x.negative, y_negative = y.negative;
-    BCD_int tmp = copy_BCD_int(x);
-    tmp.negative = y.negative = false;
-    while (!x.zero && cmp_bcd(tmp, y) != LESS_THAN) {  // x and y can't be NaN, so this is safe
-        isub_bcd(&tmp, y);
+    const bool x_negative = x.negative, y_negative = y.negative;
+    const BCD_int divisor = abs_bcd(y, true);
+    BCD_int tmp = abs_bcd(x, false);
+    while (!x.zero && cmp_bcd(tmp, divisor) != LESS_THAN)   {  // x and y can't be NaN, so this is safe
+        isub_bcd(&tmp, divisor);
         iinc_bcd(&div);
     }
     if ((div.negative = (x_negative != y_negative)))    {
         if (!tmp.zero)
             idec_bcd(&div);
         if (mod != NULL)
-            *mod = sub_bcd(y, tmp);
+            *mod = sign_bcd(sub_bcd(divisor, tmp), true, y_negative);
         free_BCD_int(&tmp);
-        mod->negative = y_negative;
     }
     else if (mod != NULL) {
         *mod = sign_bcd(tmp, true, y_negative);
@@ -1431,7 +1476,7 @@ BCD_int divmod_bcd(const BCD_int x, BCD_int y, BCD_int *mod)    {
 
 BCD_int pow_bcd(const BCD_int x, const BCD_int y)   {
     // this takes O(y * 2log_100(x)^3) time
-    if (unlikely(x.nan || y.nan || y.negative)) {
+    if (unlikely(x.nan || y.nan || y.negative || x.zero))   {
         BCD_error error, orig_error;
         orig_error = error = (y.negative) ? POW_NEG : POW_NAN;
         if (x.nan)
@@ -1540,7 +1585,7 @@ inline void ipow_bcd(BCD_int *const x, const BCD_int y) {
     *x = ret;
 }
 
-inline void ifactorial_bcd(BCD_int *const x)    {
+void ifactorial_bcd(BCD_int *const x)    {
     BCD_int ret = factorial_bcd(*x);
     free_BCD_int(x);
     *x = ret;
@@ -1655,9 +1700,7 @@ BCD_int mul_bcd_pow_10(const BCD_int x, const size_t tens)  {
         .decimal_digits = (size_t) x.decimal_digits + tens,
     };
     ret.bcd_digits = (ret.decimal_digits + 1) / 2;
-    ret.data = (packed_BCD_pair *) calloc(ret.bcd_digits + 1, sizeof(packed_BCD_pair));
-    // TODO: why does valgrind complain if I don't add 1 here? That makes me thing my math below is wrong.
-    // specifically I'm referring to the else block below, just after the loop.
+    ret.data = (packed_BCD_pair *) calloc(ret.bcd_digits, sizeof(packed_BCD_pair));
     if (unlikely(ret.data == NULL))
         return bcd_error(NO_MEM, NO_MEM);
     if (tens % 2 == 0)  {
@@ -1681,7 +1724,8 @@ BCD_int mul_bcd_pow_10(const BCD_int x, const size_t tens)  {
             ret.data[i + digit_diff] = x.data[i] << 4;
             ret.data[i + digit_diff] |= x.data[i - 1] >> 4;
         }
-        ret.data[x.bcd_digits + digit_diff] |= x.data[x.bcd_digits - 1] >> 4;
+        if (ret.decimal_digits % 2)
+            ret.data[x.bcd_digits + digit_diff] |= x.data[x.bcd_digits - 1] >> 4;
     }
     return ret;
 }

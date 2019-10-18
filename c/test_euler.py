@@ -250,6 +250,19 @@ def test_deterministic_build(c_file, compiler):
 
 
 @mark.skipif('NO_OPTIONAL_TESTS or ONLY_SLOW')
+def test_bcd_int(compiler):
+    exe_name = EXE_TEMPLATE.format("test_bcd_int", compiler)
+    test_path = C_FOLDER.joinpath("tests", "test_bcd_int.c")
+    check_call(templates[compiler].format(test_path, exe_name).split())
+    buff = check_output([exe_name], timeout=60).decode()
+    seed, *otherlines = buff.splitlines()
+    print(seed)
+    for line in otherlines:
+        expr, answer = line.split('==')
+        assert eval(answer) == eval(expr), expr
+
+
+@mark.skipif('NO_OPTIONAL_TESTS or ONLY_SLOW')
 def test_is_prime(benchmark, compiler):
     import p0003
     import p0007
