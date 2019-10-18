@@ -36,11 +36,13 @@ namespace c::include::iterator {
  *     uintmax_t stop;
  *     intmax_t step;
  *     IteratorTail(uintmax_t, counter)
+ *     bool example_bit : 1;
  * };
  * @endcode
  */
 #define IteratorTail(return_type, struct_type) \
     return_type (*const iterator_function)(struct_type *it); /**< @private The pointer to the iteration function @see next @cond EXPAND_ITERATOR_TAIL */\
+    void (*const destructor)(struct_type *it); /**< @private The pointer to the destructor function @see free_iterator @cond EXPAND_ITERATOR_TAIL */\
     bool exhausted : 1;\
     bool started : 1;\
     bool phase : 1; /** @endcond */
@@ -106,6 +108,35 @@ namespace c::include::iterator {
 #define IteratorInitHead(advance, ...) {.iterator_function = &advance, __VA_ARGS__}
 
 /**
+ * @brief The extension macro for initializing @ref c::include::iterator::Iterator "Iterators" with a destructor
+ * @param func The destructor function of your iterator
+ * @relatedalso c::include::iterator::Iterator
+ *
+ * @attention
+ * When adding a destructor to an @ref c::include::iterator::Iterator "Iterator" subclass it MUST have the
+ * following signature:
+ * @code{.c}
+ * void function_name(iterator_subclass *is)
+ * @endcode
+ *
+ * Assignment example:
+ * @code{.c}
+ * counter counter0() {
+ *     counter ct = IteratorInitHead(iterate_counter, AddDestructor(free_counter));
+ *     return ct;  // note all other values are initialized to 0
+ * }
+ * @endcode
+ *
+ * Direct return example:
+ * @code{.c}
+ * counter counter0() {
+ *     return (counter) IteratorInitHead(iterate_counter, AddDestructor(free_counter));
+ * }
+ * @endcode
+ */
+#define AddDestructor(func) ExtendInit(destructor, &func)
+
+/**
  * @brief The extension macro for initializing more complicated @ref c::include::iterator::Iterator "Iterators"
  * @param name The name you would like to assign to in the struct (do not include the struct name or initial .)
  * @param value The value you would like to assign
@@ -152,6 +183,36 @@ namespace c::include::iterator {
  */
 #define next_p(state) (*(state->iterator_function))(state)
 
+/**
+ * @brief The generic destructor for iterators
+ * @param it The iterator you wish to destruct
+ * @relatedalso c::include::iterator::Iterator
+ * @see free_iterator_p
+ * For a version that deals with pointers
+ * @see counter
+ * for an example implementation
+ * @note
+ * Any given subclass might not include a destructor if nothing needs cleaning.
+ * That does not mean you should not call this function, as that may change in the future,
+ * and on most compilers it typically adds very little overhead (order of 3 instructions).
+ */
+#define free_iterator(it) do {if (it.destructor != NULL) (*(it.destructor))(&it);} while(0)
+
+/**
+ * @brief The generic destructor for iterator pointers
+ * @param it A pointer to the iterator you wish to destruct
+ * @relatedalso c::include::iterator::Iterator
+ * @see free_iterator
+ * For a version that deals with direct objects
+ * @see counter
+ * for an example implementation
+ * @note
+ * Any given subclass might not include a destructor if nothing needs cleaning.
+ * That does not mean you should not call this function, as that may change in the future,
+ * and on most compilers it typically adds very little overhead (order of 3 instructions).
+ */
+#define free_iterator_p(it) do {if (it->destructor != NULL) (*(it->destructor))(it);} while(0)
+
 typedef struct Iterator Iterator;
 /**
  * @brief An implementation of Python-like iterators and generators in C
@@ -163,6 +224,8 @@ struct Iterator {
     bool started : 1; /**< An indicator that the iterator has started */
     bool phase : 1; /**< An indicator that changes each time the iterator moves */
 };
+// note that this exists purely for documentation purposes. The tail macro has these features
+// marked to be hidden so that these attributes properly appear as inherited.
 
 typedef struct counter counter;
 /**

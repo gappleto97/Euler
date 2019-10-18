@@ -35,7 +35,7 @@ int main(int argc, char const *argv[])  {
         if (sum == i)   {
             answer += i;
         }
-        free_digit_counter(dc);
+        free_iterator(dc);
     }
     printf("%llu", answer);
     return 0;

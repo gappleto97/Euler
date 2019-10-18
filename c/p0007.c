@@ -27,7 +27,7 @@ int main(int argc, char const *argv[])  {
             break;
         }
     }
-    free_prime_sieve(ps);
+    free_iterator(ps);
     return 0;
 }
 

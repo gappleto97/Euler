@@ -32,7 +32,7 @@ int main(int argc, char const *argv[])  {
             factor_tracker[i] = max(factor_tracker[i], local_factor_tracker[i]);
             local_factor_tracker[i] = 0;
         }
-        free_prime_factor_counter(pfc);
+        free_iterator(pfc);
     }
     for (unsigned char i = 2; i < 20; i++)  {
         for (unsigned char j = 0; j < factor_tracker[i]; j++)   {

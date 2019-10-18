@@ -36,7 +36,7 @@ int main(int argc, char const *argv[])  {
             if (!broken)    {
                 answer = max(answer, prod);
             }
-            free_digit_counter(dc);
+            free_iterator(dc);
         }
     }
     printf("%llu", answer);

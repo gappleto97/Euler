@@ -52,6 +52,34 @@ static size_t prime_cache_idx = 0;
 prime_sieve prime_sieve0();
 
 /**
+ * The destructor for the prime number counter
+ *
+ * @memberof prime_counter
+ * @private
+ */
+void free_prime_counter(prime_counter *pc);
+
+/**
+ * The destructor for the prime number sieve
+ *
+ * @memberof prime_sieve
+ * @private
+ */
+void free_prime_sieve(prime_sieve *ps)  {
+    free_iterator(ps->source);
+    if (ps->sieve != NULL)   {
+        free(ps->sieve);
+    }
+}
+
+void free_prime_counter(prime_counter *pc)  {
+    if (pc->ps != NULL)  {
+        free_prime_sieve(pc->ps);
+        free(pc->ps);
+    }
+}
+
+/**
  * The function to advance a prime number generator
  * @param pc the counter you want to advance
  * @memberof prime_counter
@@ -130,7 +158,11 @@ uintmax_t advance_prime_counter(prime_counter *pc) {
  */
 prime_counter prime_counter1(uintmax_t stop);
 inline prime_counter prime_counter1(uintmax_t stop) {
-    return (prime_counter) IteratorInitHead(advance_prime_counter, ExtendInit(stop, stop));
+    return (prime_counter) IteratorInitHead(
+        advance_prime_counter,
+        AddDestructor(free_prime_counter),
+        ExtendInit(stop, stop)
+    );
 }
 
 /**
@@ -212,6 +244,7 @@ uintmax_t advance_prime_sieve(prime_sieve *ps) {
 prime_sieve prime_sieve0()  {
     prime_sieve ret = IteratorInitHead(
         advance_prime_sieve,
+        AddDestructor(free_prime_sieve),
         ExtendInit(source, prime_counter0()),
         ExtendInit(prime, 3),
         ExtendInit(prime_squared, 9),
@@ -220,32 +253,6 @@ prime_sieve prime_sieve0()  {
     next(ret.source);
     next(ret.source);
     return ret;
-}
-
-/**
- * The destructor for the prime number counter
- *
- * @memberof prime_counter
- */
-void free_prime_counter(prime_counter pc);
-
-/**
- * The destructor for the prime number sieve
- *
- * @memberof prime_sieve
- */
-void free_prime_sieve(prime_sieve ps)   {
-    free_prime_counter(ps.source);
-    if (ps.sieve != NULL)   {
-        free(ps.sieve);
-    }
-}
-
-void free_prime_counter(prime_counter pc)   {
-    if (pc.ps != NULL)  {
-        free_prime_sieve(*pc.ps);
-        free(pc.ps);
-    }
 }
 
 
@@ -260,6 +267,17 @@ struct prime_factor_counter {
     prime_counter pc;  /**< The prime number generator being used to test */
     IteratorTail(uintmax_t, prime_factor_counter)
 };
+
+/**
+ * The destructor for the prime factor generator
+ *
+ * @memberof prime_factor_counter
+ * @private
+ */
+void free_prime_factor_counter(prime_factor_counter *pfc);
+inline void free_prime_factor_counter(prime_factor_counter *pfc) {
+    free_iterator(pfc->pc);
+}
 
 /**
  * The function to advance a prime factor iterator
@@ -293,22 +311,13 @@ uintmax_t advance_prime_factor_counter(prime_factor_counter *pfc)  {
 prime_factor_counter prime_factors(uintmax_t n)    {
     prime_factor_counter ret = IteratorInitHead(
         advance_prime_factor_counter,
+        AddDestructor(free_prime_factor_counter),
         ExtendInit(pc, prime_counter0()),
         ExtendInit(current, 2),
         ExtendInit(target, n)
     );
     next(ret.pc);
     return ret;
-}
-
-/**
- * The destructor for the prime factor generator
- *
- * @memberof prime_factor_counter
- */
-void free_prime_factor_counter(prime_factor_counter pfc);
-inline void free_prime_factor_counter(prime_factor_counter pfc) {
-    free_prime_counter(pfc.pc);
 }
 
 /**
@@ -324,7 +333,7 @@ uintmax_t is_composite(uintmax_t n)   {
     }
     prime_factor_counter iter = prime_factors(n);
     uintmax_t ret = next(iter);
-    free_prime_factor_counter(iter);
+    free_iterator(iter);
     if (ret == n)   {
         return 0;
     }

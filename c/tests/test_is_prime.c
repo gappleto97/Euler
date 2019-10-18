@@ -25,7 +25,7 @@ int main(int argc, char const *argv[]) {
         prev = p;
         p = next(pc);
     }
-    free_prime_counter(pc);
+    free_iterator(pc);
     return 0;
 }
 

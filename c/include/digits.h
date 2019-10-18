@@ -34,11 +34,22 @@ static unsigned char advance_digit_counter(digit_counter *dc)   {
 
 /**
  * @memberof digit_counter
+ * @private
+ */
+void free_digit_counter(digit_counter *dc)  {
+    if (dc->digits != NULL) {
+        free(dc->digits);
+    }
+}
+
+/**
+ * @memberof digit_counter
  */
 digit_counter digits(uintmax_t n)  {
     const size_t digit_len = (size_t) ceil(log10((double) (n + 1)));
     digit_counter ret = IteratorInitHead(
         advance_digit_counter,
+        AddDestructor(free_digit_counter),
         ExtendInit(digits, (unsigned char *) malloc(digit_len * sizeof(unsigned char))),
         ExtendInit(idx, digit_len - 1)
     );
@@ -47,15 +58,6 @@ digit_counter digits(uintmax_t n)  {
         n /= 10;
     }
     return ret;
-}
-
-/**
- * @memberof digit_counter
- */
-void free_digit_counter(digit_counter dc)   {
-    if (dc.digits != NULL)  {
-        free(dc.digits);
-    }
 }
 
 
