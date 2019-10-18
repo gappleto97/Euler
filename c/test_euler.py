@@ -125,7 +125,7 @@ if not compilers:
 
 valgrind_compilers = [x for x in compilers if x != 'CL']
 COMPILER_LEN = len(max(compilers, key=len))  # make sure compiler fixtures are evenly spaced
-V_COMPILER_LEN = len(max(valgrind_compilers, key=len))
+V_COMPILER_LEN = len(max(valgrind_compilers or [''], key=len))
 BUILD_FOLDER.mkdir(parents=True, exist_ok=True)
 CL_NO_64 = False
 if 'CL' in compilers:
