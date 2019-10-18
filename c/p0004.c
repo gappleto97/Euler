@@ -20,7 +20,7 @@ namespace c::p0004 {
 
 
 int main(int argc, char const *argv[])  {
-    unsigned int answer = 0, i, j, a, z, prod;
+    unsigned long long answer = 0, i, j, a, z, prod;
     bool broken;
     for (i = 100; i < 1000; i++)    {
         for (j = 100; j < 1000; j++)    {
@@ -39,7 +39,7 @@ int main(int argc, char const *argv[])  {
             free_digit_counter(dc);
         }
     }
-    printf("%u", answer);
+    printf("%llu", answer);
     return 0;
 }
 
