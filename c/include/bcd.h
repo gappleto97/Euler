@@ -9,12 +9,8 @@
 #include <string.h>
 #include "macros.h"
 
-#if !PCC_COMPILER
     #include <stdlib.h>
     #include <math.h>
-#else
-    #include "./math.h"
-#endif
 
 #ifdef DOXYGEN
 namespace c::include::bcd {
@@ -1007,15 +1003,11 @@ BCD_int new_BCD_int1(const intmax_t a)  {
 }
 
 BCD_int new_BCD_int2(uintmax_t a, const bool negative)  {
-    BCD_int c = (BCD_int) {
+    BCD_int c = {
         .negative = negative,
         .even = !(a % 2),
         .zero = !a,
-        #if !PCC_COMPILER
-            .decimal_digits = ceil(log10(a + 1)),
-        #else
-            .decimal_digits = imprecise_log10(a + 1),
-        #endif
+        .decimal_digits = (size_t) ceil(log10((double) (a + 1))),
     };
     c.bcd_digits = (c.decimal_digits + 1) / 2;
     c.data = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * c.bcd_digits);

@@ -5,12 +5,8 @@
 #include <string.h>
 #include "macros.h"
 
-#if !PCC_COMPILER
-    #include <stdlib.h>
-    #include <math.h>
-#else
-    #include "./math.h"
-#endif
+#include <stdlib.h>
+#include <math.h>
 
 #include "iterator.h"
 

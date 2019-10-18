@@ -24,20 +24,7 @@ elif [ $jsver ]; then
     fi
 else
     sudo apt-get update
-    if [ $pcc ]; then
-        sudo apt-get install -y build-essential flex bison
-        mkdir pcc pcc-libs
-        wget -O - -o /dev/null http://pcc.ludd.ltu.se/ftp/pub/pcc-releases/pcc-1.1.0.tgz | tar -xz --no-seek -C pcc --strip-components=1
-        wget -O - -o /dev/null http://pcc.ludd.ltu.se/ftp/pub/pcc-releases/pcc-libs-1.1.0.tgz | tar -xz --no-seek -C pcc-libs --strip-components=1
-        cd pcc
-        sed -i 's/MANPAGE=@BINPREFIX@cpp/MANPAGE=@BINPREFIX@pcc-cpp/' cc/cpp/Makefile.in
-        ./configure --prefix=/usr --libexecdir=/usr/lib/{x86_64,i386}-linux-gnu
-        sudo make && sudo make install
-        cd ../pcc-libs
-        ./configure --prefix=/usr --libexecdir=/usr/lib/{x86_64,i386}-linux-gnu
-        sudo make && sudo make install
-        cd ..
-    elif [ $icc ]; then
+    if [ $icc ]; then
         mkdir iccdir
         wget -O - -o /dev/null https://registrationcenter-download.intel.com/akdlm/irc_nas/15873/intel-sw-tools-installer.tar.gz | tar -xz --no-seek -C iccdir  --strip-components=1
         cd iccdir

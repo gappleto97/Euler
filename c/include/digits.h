@@ -4,12 +4,8 @@
 #include "macros.h"
 #include "iterator.h"
 
-#if !PCC_COMPILER
-    #include <stdlib.h>
-    #include <math.h>
-#else
-    #include "./math.h"
-#endif
+#include <stdlib.h>
+#include <math.h>
 
 #ifdef DOXYGEN
 namespace c::include::digits {
@@ -40,11 +36,7 @@ static unsigned char advance_digit_counter(digit_counter *dc)   {
  * @memberof digit_counter
  */
 digit_counter digits(uintmax_t n)  {
-    #if !PCC_COMPILER
-        const size_t digit_len = ceil(log10(n + 1));
-    #else
-        const size_t digit_len = imprecise_log10(n + 1);
-    #endif
+    const size_t digit_len = (size_t) ceil(log10((double) (n + 1)));
     digit_counter ret = IteratorInitHead(
         advance_digit_counter,
         ExtendInit(digits, (unsigned char *) malloc(digit_len * sizeof(unsigned char))),

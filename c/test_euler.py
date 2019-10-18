@@ -45,9 +45,6 @@ answers = {
 # this is the set of problems where I have the right answer but wrong solution
 known_slow: Set[int] = set()
 
-# this is the set of problems where builds are not reproducible on PCC compiler
-PCC_no_reproducible: Set[str] = set()
-
 # platform variables section
 IN_WINDOWS = system() == 'Windows'
 IN_OSX = system() == 'Darwin'
@@ -117,7 +114,7 @@ else:
             compilers.append('CLANG')
     if AOCC_BINARY != 'clang' and which(AOCC_BINARY):
         compilers.append('AOCC')
-    for x in ('cl', 'icc', 'pcc', 'tcc'):
+    for x in ('cl', 'icc', 'tcc'):
         if which(x):
             compilers.append(x.upper())
 if not compilers:
@@ -161,7 +158,6 @@ templates = {
     'CL': "cl -Fe:{{1}} -Fo{}\\ -O2 -GL -GF -GW -Brepro -TC {{0}}".format(BUILD_FOLDER.joinpath('objects')),
     'TCC': "tcc -lm -Wall -Werror -o {1} {0}",
     'ICC': GCC_TEMPLATE.format('icc', ''),
-    'PCC': "pcc -O3 -DNO_USER_WARNINGS -Wall -Werror -o {1} {0}",
     'AOCC': CLANG_TEMPLATE.format(AOCC_BINARY, CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=1'),
     'debug': {
         'GCC': GCC_TEMPLATE.format(GCC_BINARY, '-g'),
@@ -169,7 +165,6 @@ templates = {
         # CL would go here if I thought it worked with gdb/valgrind
         'TCC': "tcc -lm -Wall -Werror -g -o {1} {0}",
         'ICC': GCC_TEMPLATE.format('icc', '-g'),
-        # PCC would go here if it worked with valgrind
         'AOCC': CLANG_TEMPLATE.format(AOCC_BINARY, CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=1 -g'),
     }
 }
@@ -219,11 +214,10 @@ def test_compiler_macros(compiler):
     assert flags[2] == (compiler == "GCC")
     assert flags[3] == (compiler == "ICC")
     assert flags[4] == (compiler == "AOCC")
-    assert flags[5] == (compiler == "PCC")
-    assert flags[6] == (compiler == "TCC")
-    assert flags[7] == (EXE_EXT == "x86" or expect_32)
-    assert flags[8] == (EXE_EXT == "x86_64" and not expect_32)
-    assert flags[9] == (EXE_EXT not in ("x86", "x86_64", "exe"))
+    assert flags[5] == (compiler == "TCC")
+    assert flags[6] == (EXE_EXT == "x86" or expect_32)
+    assert flags[7] == (EXE_EXT == "x86_64" and not expect_32)
+    assert flags[8] == (EXE_EXT not in ("x86", "x86_64", "exe"))
 
 
 @mark.skipif('NO_OPTIONAL_TESTS')
@@ -241,8 +235,6 @@ def test_deterministic_build(c_file, compiler):
     except AssertionError:
         if IN_WINDOWS and compiler != 'CL':  # mingw gcc doesn't seem to make reproducible builds
             xfail()
-        elif compiler == 'PCC' and c_file in PCC_no_reproducible:
-            xfail()  # PCC doesn't allow reproducible builds with static keyword
         raise
 
 

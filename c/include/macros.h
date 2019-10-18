@@ -58,20 +58,10 @@
 #endif
 
 /**
- * @brief Indicates whether the code is being compiled under the Portable C Compiler
- * This is guaranteed to be either 0 or 1
- */
-#ifdef __PCC__
-    #define PCC_COMPILER 1
-#else
-    #define PCC_COMPILER 0
-#endif
-
-/**
  * @brief Indicates whether the code is being compiled under the Tiny C Compiler
  * This is guaranteed to be either 0 or 1 if your compiler supports constant folding, or to evaluate to 0 or 1 if not
  */
-#define TCC_COMPILER (!(AMD_COMPILER || CL_COMPILER || CLANG_COMPILER || GCC_COMPILER || INTEL_COMPILER || PCC_COMPILER))
+#define TCC_COMPILER (!(AMD_COMPILER || CL_COMPILER || CLANG_COMPILER || GCC_COMPILER || INTEL_COMPILER))
 
 /**
  * @brief Indicates whether the code is being compiled for an amd64 or x86_64 machine
@@ -114,23 +104,6 @@
     #define ARM_THUMB 1
 #else
     #define ARM_THUMB 0
-#endif
-
-// compiler workaround section
-
-#if (PCC_COMPILER && !DOXYGEN)
-    #ifndef NO_USER_WARNINGS
-        #warning static is being redefined to '' because you are on PCC. \
-        This is happening because PCC does not allow reproducible builds with the static keyword used globally. \
-        Make sure this does not have side effects, or undefine/redefine static per-usage.
-    #endif
-    /**
-     * @brief ON PCC ONLY static is stripped from file-level variables.
-     *
-     * This is because PCC cannot make reproducible builds if static data is defined at a global level. In other
-     * compilers it is typically safer to have such data be static, so it is left in for those.
-     */
-    #define static
 #endif
 
 // helper macro function section

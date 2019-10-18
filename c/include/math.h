@@ -7,10 +7,7 @@ namespace c::include::math {
 
 #include "./macros.h"
 
-#if !PCC_COMPILER
-    #include <stdlib.h>
-#endif
-
+#include <stdlib.h>
 #include <stdint.h>
 
 uintmax_t factorial(unsigned int n);
@@ -89,39 +86,6 @@ uintmax_t n_choose_r(unsigned int n, unsigned int r)    {
     free(factors);
     return answer;
 }
-
-#if PCC_COMPILER
-    unsigned char imprecise_log10(uintmax_t x);
-    inline unsigned char imprecise_log10(uintmax_t x)  {
-        unsigned char answer = 0;
-        while (x)   {
-            x /= 10;
-            ++answer;
-        }
-        return answer;
-    }
-
-    double sqrt(double S);
-    inline double sqrt(double S)   {
-        // implements the Bakhshali method of square root computation to fix a PCC error
-        double a, x = S / 2;
-        unsigned int i;
-        for (i = 0; i < PCC_SQRT_ACCURACY; i++) {
-            a = (S - x*x) / (2 * x);
-            x = x + a - (a * a) / (2 * (x + a));
-        }
-        return x;
-    }
-
-    uintmax_t ceil(double x);
-    inline uintmax_t ceil(double x)   {
-        uintmax_t ret = (uintmax_t) x;
-        if (x == (double) ret)  {
-            return ret;
-        }
-        return ret + 1;
-    }
-#endif
 
 #ifdef DOXYGEN
 };
