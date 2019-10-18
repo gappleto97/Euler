@@ -14,7 +14,11 @@ inline intmax_t nz_rand()   {
 }
 
 int main(int argc, char const *argv[])  {
-    const unsigned int seed = (unsigned int) time(NULL);
+    #ifndef SEED_OVERRIDE
+        const unsigned int seed = (unsigned int) time(NULL);
+    #else
+        const unsigned int seed = SEED_OVERRIDE;
+    #endif
     printf("%d\n", seed);
     srand(seed);
     BCD_int tmp, arr[] = {new_BCD_int1(nz_rand()), new_BCD_int1(-nz_rand()), new_BCD_int2(nz_rand(), rand() % 2)},
