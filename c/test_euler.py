@@ -304,22 +304,34 @@ def test_problem(benchmark, key, compiler):
         fail_func("Exceeding 60s! (Max={:.6}s, Median={:.6}s)".format(stats.max, stats.median))
 
 
-if which('valgrind') and valgrind_compilers:
-    valgrind_test_exe_name = EXE_TEMPLATE.format('valgrind-check-{}'.format(uuid4()), valgrind_compilers[0])
-    check_call(
-        templates['debug'][valgrind_compilers[0]].format(
-            C_FOLDER.joinpath('p0000_template.c'),
-            valgrind_test_exe_name
-        ).split())
-    VALGRIND_ERR_LIST = not run(['valgrind', '-s', valgrind_test_exe_name], cwd=BUILD_FOLDER).returncode
+if valgrind_compilers:
+    if which('valgrind'):
+        valgrind_test_exe_name = EXE_TEMPLATE.format('valgrind-check-{}'.format(uuid4()), valgrind_compilers[0])
+        check_call(
+            templates['debug'][valgrind_compilers[0]].format(
+                C_FOLDER.joinpath('p0000_template.c'),
+                valgrind_test_exe_name
+            ).split())
+        VALGRIND_ERR_LIST = not run(['valgrind', '-s', valgrind_test_exe_name], cwd=BUILD_FOLDER).returncode
 
-    def test_valgrind(c_file, v_compiler):
-        if (NO_SLOW and key in known_slow) or (ONLY_SLOW and key not in known_slow) or NO_OPTIONAL_TESTS:
-            skip()
-        exe_name = EXE_TEMPLATE.format("valgrind-{}".format(uuid4()), v_compiler)
-        check_call(templates['debug'][v_compiler].format(c_file, exe_name).split())
-        if VALGRIND_ERR_LIST:
-            args = ['valgrind', '--error-exitcode=1', '--leak-check=yes', '-s', exe_name]
-        else:
-            args = ['valgrind', '--error-exitcode=1', '--leak-check=yes', exe_name]
-        check_output(args, cwd=BUILD_FOLDER)
+        def test_valgrind(c_file, v_compiler):
+            if (NO_SLOW and key in known_slow) or (ONLY_SLOW and key not in known_slow) or NO_OPTIONAL_TESTS:
+                skip()
+            exe_name = EXE_TEMPLATE.format("valgrind-{}".format(uuid4()), v_compiler)
+            check_call(templates['debug'][v_compiler].format(c_file, exe_name).split())
+            if VALGRIND_ERR_LIST:
+                args = ['valgrind', '--error-exitcode=1', '--leak-check=yes', '-s', exe_name]
+            else:
+                args = ['valgrind', '--error-exitcode=1', '--leak-check=yes', exe_name]
+            check_output(args, cwd=BUILD_FOLDER)
+
+    if which('pahole'):
+        def test_pahole(c_file, v_compiler):
+            if (NO_SLOW and key in known_slow) or (ONLY_SLOW and key not in known_slow) or NO_OPTIONAL_TESTS:
+                skip()
+            exe_name = EXE_TEMPLATE.format("pahole-{}".format(uuid4()), v_compiler)
+            check_call(templates['debug'][v_compiler].format(c_file, exe_name).split())
+            args = ['pahole', exe_name, '-VERS', '-x', '_IO_FILE']
+            buff = check_output(args)
+            if b'hole' in buff:
+                fail("There is an improperly packed struct!")
