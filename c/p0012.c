@@ -40,7 +40,7 @@ typedef struct triangle_iterator triangle_iterator;
 struct triangle_iterator    {
     unsigned long long current;
     unsigned long long idx;
-    IteratorTail(unsigned long long, triangle_iterator);
+    IteratorTail(unsigned long long, triangle_iterator)
 };
 
 /**
