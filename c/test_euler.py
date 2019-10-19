@@ -117,7 +117,7 @@ else:
             compilers.append('CLANG')
     if AOCC_BINARY != 'clang' and which(AOCC_BINARY):
         compilers.append('AOCC')
-    for x in ('cl', 'icc', 'tcc'):
+    for x in ('cl', 'icc'):
         if which(x):
             compilers.append(x.upper())
 if not compilers:
@@ -164,14 +164,12 @@ templates = {
     'GCC': GCC_TEMPLATE.format(GCC_BINARY, ''),
     'CLANG': CLANG_TEMPLATE.format('clang', CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=0'),
     'CL': "cl -Fe:{{1}} -Fo{}\\ -O2 -GL -GF -Brepro -WX -W3 -TC {{0}}".format(BUILD_FOLDER.joinpath('objects')),
-    'TCC': "tcc -lm -Wall -Werror -o {1} {0}",
     'ICC': GCC_TEMPLATE.format('icc', ''),
     'AOCC': CLANG_TEMPLATE.format(AOCC_BINARY, CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=1'),
     'debug': {
         'GCC': GCC_TEMPLATE.format(GCC_BINARY, '-g'),
         'CLANG': CLANG_TEMPLATE.format('clang', CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=0 -g'),
         # CL would go here if I thought it worked with gdb/valgrind
-        'TCC': "tcc -lm -Wall -Werror -g -o {1} {0}",
         'ICC': GCC_TEMPLATE.format('icc', '-g'),
         'AOCC': CLANG_TEMPLATE.format(AOCC_BINARY, CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=1 -g'),
     }
@@ -225,10 +223,9 @@ def test_compiler_macros(compiler):
     assert flags[2] == (compiler == "GCC")
     assert flags[3] == (compiler == "ICC")
     assert flags[4] == (compiler == "AOCC")
-    assert flags[5] == (compiler == "TCC")
-    assert flags[6] == (EXE_EXT == "x86" or expect_32)
-    assert flags[7] == (EXE_EXT == "x86_64" and not expect_32)
-    assert flags[8] == (EXE_EXT not in ("x86", "x86_64", "exe"))
+    assert flags[5] == (EXE_EXT == "x86" or expect_32)
+    assert flags[6] == (EXE_EXT == "x86_64" and not expect_32)
+    assert flags[7] == (EXE_EXT not in ("x86", "x86_64", "exe"))
 
 
 @mark.skipif('NO_OPTIONAL_TESTS')

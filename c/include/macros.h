@@ -58,12 +58,6 @@
 #endif
 
 /**
- * @brief Indicates whether the code is being compiled under the Tiny C Compiler
- * This is guaranteed to be either 0 or 1 if your compiler supports constant folding, or to evaluate to 0 or 1 if not
- */
-#define TCC_COMPILER (!(AMD_COMPILER || CL_COMPILER || CLANG_COMPILER || GCC_COMPILER || INTEL_COMPILER))
-
-/**
  * @brief Indicates whether the code is being compiled for an amd64 or x86_64 machine
  * This is guaranteed to be either 0 or 1
  */
@@ -136,7 +130,7 @@
  */
 #define swap(x, y, T) do { T SWAP = x; x = y; y = SWAP; } while (0)
 
-#if !(CL_COMPILER || TCC_COMPILER)
+#if !CL_COMPILER
 
     /**
      * @brief Indicates to the compiler (if supported) that this branch is likely to occur and it should arrange code accordingly
