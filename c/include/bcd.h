@@ -1453,7 +1453,7 @@ BCD_int divmod_bcd(const BCD_int x, BCD_int y, BCD_int *mod)    {
     const BCD_int divisor = abs_bcd(y, true);
     BCD_int tmp = abs_bcd(x, false);
     while ((tmp.decimal_digits - 1) > divisor.decimal_digits)   {  // first go through it by multiples of 10
-        const uintmax_t pow_10 = tmp.decimal_digits - divisor.decimal_digits - 1;
+        const size_t pow_10 = tmp.decimal_digits - divisor.decimal_digits - 1;
         BCD_int tmp2 = mul_bcd_pow_10(divisor, pow_10);
         isub_bcd(&tmp, tmp2);
         free_BCD_int(&tmp2);
