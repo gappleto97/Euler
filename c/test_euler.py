@@ -308,7 +308,13 @@ def test_problem(benchmark, key, compiler):
 
 
 if which('valgrind') and valgrind_compilers:
-    VALGRIND_ERR_LIST = not run(['valgrind', '-s']).returncode
+    valgrind_test_exe_name = EXE_TEMPLATE.format('valgrind-check-{}'.format(uuid4()), valgrind_compilers[0])
+    check_call(
+        templates['debug'][valgrind_compilers[0]].format(
+            C_FOLDER.joinpath('p0000_template.c'),
+            valgrind_test_exe_name
+        ).split())
+    VALGRIND_ERR_LIST = not run(['valgrind', '-s', valgrind_test_exe_name], cwd=BUILD_FOLDER).returncode
 
     def test_valgrind(c_file, v_compiler):
         if (NO_SLOW and key in known_slow) or (ONLY_SLOW and key not in known_slow) or NO_OPTIONAL_TESTS:
