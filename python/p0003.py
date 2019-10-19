@@ -53,10 +53,10 @@ def primes(stop: Optional[int] = None) -> Iterator[int]:
     else:
         yield from takewhile(stop.__gt__, cache)
     global last_cached
-    if stop and last_cached - 2 > stop:
-        return
     if stop is None:
         secondary = modified_eratosthenes()
+    elif last_cached - 2 > stop:
+        return
     else:
         secondary = takewhile(stop.__gt__, modified_eratosthenes())
     for p in secondary:

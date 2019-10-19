@@ -11,8 +11,12 @@ does not.
 
 Revision 2:
 
-Utilize the underlying pattern of the sequence to avoid needing modulo divison,
+Utilize the underlying pattern of the sequence to avoid needing modulo division,
 speeding up by ~2x.
+
+Revision 3:
+
+Revise fib() to be consistent with fib_by_3(). Now both iterate starting from 0.
 
 Problem:
 
@@ -25,12 +29,14 @@ By considering the terms in the Fibonacci sequence whose values do not exceed
 four million, find the sum of the even-valued terms.
 
 """
+import itertools
 from typing import Iterator
 
 
 def fib() -> Iterator[int]:
     """This generator goes through the fibonacci sequence"""
     a, b = 0, 1
+    yield a
     while True:
         yield b
         a, b = b, a + b
@@ -47,14 +53,12 @@ def fib_by_3(start_index: int = 0) -> Iterator[int]:
     F[n] = 4 * F[n-3]                   + F[n-6]
     """
     orig = fib()
-    a = 0
-    if start_index:
-        for _ in range(start_index - 1):
-            next(orig)
-        a = next(orig)
-    next(orig)  # start + 1
-    next(orig)  # start + 2
-    b = next(orig)  # start + 3
+    for _ in range(start_index):
+        next(orig)
+    a = next(orig)  # F[n-6]
+    next(orig)
+    next(orig)
+    b = next(orig)  # F[n-3]
     del orig
     yield a
     while True:
@@ -62,13 +66,8 @@ def fib_by_3(start_index: int = 0) -> Iterator[int]:
         a, b = b, a + b * 4
 
 
-def main():
-    f = fib_by_3()  # this works because every third value is even
-    answer = val = 0
-    while val < 4_000_000:
-        answer += val
-        val = next(f)
-    return answer
+def main() -> int:
+    return sum(itertools.takewhile((4_000_000).__gt__, fib_by_3()))  # this works because every third value is even
 
 
 if __name__ == '__main__':
