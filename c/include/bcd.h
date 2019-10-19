@@ -410,7 +410,7 @@ BCD_int mul_bcd(const BCD_int x, const BCD_int y);
  * @remark
  * @li If x or y is @ref BCD_nan "NaN", or y is 0, then it will take \f$Θ(1)\f$ time
  * @li If y is 1, then it will take \f$Θ(\log_{100}(x))\f$ time
- * @li Otherwise it will take \f$Θ(\lceil\frac{x}{y}\rceil \cdot \log_{100}(x))\f$ time
+ * @li Otherwise it will take \f$O(\lceil\frac{x}{y}\rceil \cdot \log_{100}(x))\f$ time
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
@@ -430,7 +430,7 @@ BCD_int div_bcd(const BCD_int x, const BCD_int y);
  * This function has two behaviors for performance analysis
  * @remark
  * @li If x or y is @ref BCD_nan "NaN", or y is either 0 or 1, then it will take \f$Θ(1)\f$ time
- * @li Otherwise it will take \f$Θ(\lceil\frac{x}{y}\rceil \cdot \log_{100}(x))\f$ time
+ * @li Otherwise it will take \f$O(\lceil\frac{x}{y}\rceil \cdot \log_{100}(x))\f$ time
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
@@ -452,7 +452,7 @@ BCD_int mod_bcd(const BCD_int x, const BCD_int y);
  * @remark
  * @li If x or y is @ref BCD_nan "NaN", or y is 0, then it will take \f$Θ(1)\f$ time
  * @li If y is 1, then it will take \f$Θ(\log_{100}(x))\f$ time
- * @li Otherwise it will take \f$Θ(\lceil\frac{x}{y}\rceil \cdot \log_{100}(x))\f$ time
+ * @li Otherwise it will take \f$O(\lceil\frac{x}{y}\rceil \cdot \log_{100}(x))\f$ time
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
@@ -1452,7 +1452,16 @@ BCD_int divmod_bcd(const BCD_int x, BCD_int y, BCD_int *mod)    {
     const bool x_negative = x.negative, y_negative = y.negative;
     const BCD_int divisor = abs_bcd(y, true);
     BCD_int tmp = abs_bcd(x, false);
-    while (!x.zero && cmp_bcd(tmp, divisor) != LESS_THAN)   {  // x and y can't be NaN, so this is safe
+    while ((tmp.decimal_digits - 1) > divisor.decimal_digits)   {  // first go through it by multiples of 10
+        const uintmax_t pow_10 = tmp.decimal_digits - divisor.decimal_digits - 1;
+        BCD_int tmp2 = mul_bcd_pow_10(divisor, pow_10);
+        isub_bcd(&tmp, tmp2);
+        free_BCD_int(&tmp2);
+        tmp2 = mul_bcd_pow_10(BCD_one, pow_10);
+        iadd_bcd(&div, tmp2);
+        free_BCD_int(&tmp2);
+    }
+    while (cmp_bcd(tmp, divisor) != LESS_THAN)  {  // x and y can't be NaN, so this is safe
         isub_bcd(&tmp, divisor);
         iinc_bcd(&div);
     }
