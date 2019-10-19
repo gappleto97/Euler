@@ -35,12 +35,16 @@ struct prime_counter {
  * The iterator that implements a modified sieve of eratosthenes
  */
 struct prime_sieve {
-    uintmax_t *sieve;  /**< The sieve state used to generate new primes stored as pairs of [value, step] */
-    size_t sieve_len;  /**< The length of the sieve state (divided by 2) */
-    uintmax_t prime;  /**< The current reference prime */
-    uintmax_t prime_squared;  /**< The reference prime squared */
-    uintmax_t candidate;  /**< The current candidate prime number */
     prime_counter source;  /**< The source of new reference prime numbers */
+    uintmax_t prime_squared;  /**< The reference prime squared */
+    uintmax_t prime : (sizeof(uintmax_t) * 4);  /**< The current reference prime */
+    // @cond SHOW_PADDING_VARS
+    uintmax_t _pad1 : (sizeof(uintmax_t) * 4);
+    bool _pad2 : 1;
+    // @endcond
+    size_t sieve_len : (sizeof(size_t) * 8 - 1);  /**< The length of the sieve state (divided by 2) */
+    uintmax_t *sieve;  /**< The sieve state used to generate new primes stored as pairs of [value, step] */
+    uintmax_t candidate;  /**< The current candidate prime number */
     IteratorTail(uintmax_t, prime_sieve)
 };
 
