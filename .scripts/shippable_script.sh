@@ -40,8 +40,8 @@ else
         export PATH
         cd ..
     else
-        sudo apt-get install -y $COMPILER_OVERRIDE
+        sudo apt-get install -y valgrind $COMPILER_OVERRIDE
     fi
-    sudo apt-get install -y valgrind dwarves python3-pip
+    sudo apt-get install -y dwarves python3-pip
     cd c && make test USER_FLAG=
 fi
