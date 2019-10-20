@@ -331,7 +331,7 @@ if valgrind_compilers:
                 skip()
             exe_name = EXE_TEMPLATE.format("pahole-{}".format(uuid4()), v_compiler)
             check_call(templates['debug'][v_compiler].format(c_file, exe_name).split())
-            args = ['pahole', exe_name, '-VERS', '-x', '_IO_FILE']
-            buff = check_output(args)
-            if b'hole' in buff:
-                fail("There is an improperly packed struct!")
+            args = ['pahole', exe_name, '-ERS', '-x', '_IO_FILE']
+            buff = check_output(args).decode()
+            print(buff)
+            assert 'hole' not in buff
