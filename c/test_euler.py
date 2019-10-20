@@ -334,4 +334,7 @@ if valgrind_compilers:
             args = ['pahole', exe_name, '-ERS', '-x', '_IO_FILE']
             buff = check_output(args).decode()
             print(buff)
-            assert 'hole' not in buff
+            if 'hole' in buff:
+                for line in buff.splitlines():
+                    if 'hole' in line and 'BRAIN FART' not in line:
+                        raise Exception()
