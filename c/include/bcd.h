@@ -70,14 +70,17 @@ typedef struct BCD_int  {
     packed_BCD_pair *data;  /**< the raw data of the integer, DO NOT modify directly */
     size_t bcd_digits;      /**< the byte count of data */
     size_t decimal_digits;  /**< the number of decimal digits in this integer */
-    bool negative : 1;      /**< indicates the integer is negative */
-    bool zero : 1;          /**< indicates the integer is 0 */
-    bool even : 1;          /**< indicates the integer is even */
-    bool constant : 1;      /**< indicates that the integer is a constant and will not be touched by free_bcd_int() */
-    bool nan : 1;           /**< indicates that the integer is @ref BCD_nan "NaN" */
-    // note: the following are 5 bits instead of 4 because some compilers assume they are signed
-    BCD_error error : 5;       /**< this specifies why the BCD_int is @ref BCD_nan "NaN", if it is */
-    BCD_error orig_error : 5;  /**< this specifies the oringal source of @ref BCD_nan "NaN", rather than the most recent */
+    union {
+        uint8_t nan;  /**< indicates that the integer is @ref BCD_nan "NaN" */
+        PACK(struct {
+            BCD_error error : 4;       /**< this specifies why the BCD_int is @ref BCD_nan "NaN", if it is */
+            BCD_error orig_error : 4;  /**< this specifies the oringal source of @ref BCD_nan "NaN", rather than the most recent */
+        });
+    };
+    bool negative : 1;  /**< indicates the integer is negative */
+    bool zero : 1;      /**< indicates the integer is 0 */
+    bool even : 1;      /**< indicates the integer is even */
+    bool constant : 1;  /**< indicates that the integer is a constant and will not be touched by free_bcd_int() */
 } BCD_int;
 
 /** @} */ //
@@ -91,9 +94,18 @@ typedef struct BCD_int  {
  *  @{
  */
 
+/** The BCD_two constant is used to represent the commonly used value two*/
+const BCD_int BCD_two = {
+    .data = (packed_BCD_pair[]) {2},
+    .bcd_digits = 1,
+    .decimal_digits = 1,
+    .even = true,
+    .constant = true
+};  // note that non-specified values are initialized to NULL or 0
+
 /** The BCD_one constant is used to represent the commonly used value one*/
 const BCD_int BCD_one = {
-    .data = (packed_BCD_pair *) "\x01",
+    .data = (packed_BCD_pair[]) {1},
     .bcd_digits = 1,
     .decimal_digits = 1,
     .constant = true
@@ -108,10 +120,9 @@ const BCD_int BCD_zero = {
 
 /** The BCD_nan constant is used to represent the commonly used value NaN*/
 const BCD_int BCD_nan = {
-    .constant = true,
-    .nan = true,
     .error = ORIG_NAN,
-    .orig_error = ORIG_NAN
+    .orig_error = ORIG_NAN,
+    .constant = true,
 };  // note that non-specified values are initialized to NULL or 0
 
 /** @} */ //
@@ -406,11 +417,7 @@ BCD_int mul_bcd(const BCD_int x, const BCD_int y);
  * @return A @ref BCD_int reflecting the quotient of the arguments
  * @memberof BCD_int
  * @remark
- * This function has three behaviors for performance analysis
- * @remark
- * @li If x or y is @ref BCD_nan "NaN", or y is 0, then it will take \f$Θ(1)\f$ time
- * @li If y is 1, then it will take \f$Θ(\log_{100}(x))\f$ time
- * @li Otherwise it will take \f$O(\lceil\frac{x}{y}\rceil \cdot \log_{100}(x))\f$ time
+ * @see @ref divmod_bcd for a performance analysis
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
@@ -469,8 +476,8 @@ BCD_int divmod_bcd(const BCD_int x, BCD_int y, BCD_int *mod);
  * @return A @ref BCD_int reflecting the yth power of x
  * @memberof BCD_int
  * @remark
- * This will take \f$Θ(y \cdot \log_{100}(x)^3)\f$ time if x and y are not @ref NaN "BCD_nan" and y is positive.
- * Otherwise it takes \f$Θ(1)\f$ time.
+ * If x and y are @ref NaN "BCD_nan" or y is not positive, this takes \f$Θ(1)\f$ time.
+ * Otherwise it takes \f$O((y \cdot \log_100(x))^3)\f$ time.
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
@@ -834,6 +841,10 @@ BCD_int shift_bcd_left(const BCD_int a, const size_t tens);
  * @memberof BCD_int
  * @remark
  * This function takes \f$Θ(\log_{100}(x))\f$ time
+ * @warning
+ * This function does not do true division, it simply trims digits. If you need true division, use @ref div_bcd
+ * @warning
+ * As implemented, this function is equivalent to @c{int(str(x)[:-y])}. If you assume this is true division, you will get frequent off-by-one errors.
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
@@ -849,6 +860,10 @@ BCD_int div_bcd_pow_10(const BCD_int x, const size_t tens);
  * @memberof BCD_int
  * @remark
  * This function takes \f$Θ(\log_{100}(x))\f$ time
+ * @warning
+ * This function does not do true division, it simply trims digits. If you need true division, use @ref div_bcd
+ * @warning
+ * As implemented, this function is equivalent to @c{int(str(x)[:-y])}. If you assume this is true division, you will get frequent off-by-one errors.
  * @attention
  * All operators that return a @ref BCD_int may return @ref BCD_nan "NaN" with error set to @ref NO_MEM
  * @attention
@@ -1028,7 +1043,7 @@ void print_bcd_ln(const BCD_int x);
 inline void free_BCD_int(BCD_int *const x)  {
     if (x->error != IS_FREED && !x->constant)   {
         free(x->data);
-        *x = (BCD_int) {.nan = true, .error = IS_FREED, .orig_error = IS_FREED};
+        *x = (BCD_int) {.error = IS_FREED, .orig_error = IS_FREED};
     }
 }
 
@@ -1125,7 +1140,6 @@ BCD_int BCD_from_ascii(const char *const str, const size_t digits, const bool ne
 
 inline BCD_int bcd_error(const BCD_error error, const BCD_error orig_error)  {
     return (BCD_int) {  // note that uninitialized data is 0 or NULL
-        .nan = true,
         .error = error,
         .orig_error = orig_error
     };
@@ -1389,26 +1403,71 @@ inline BCD_int dec_bcd(const BCD_int x) {
 BCD_int mul_bcd(const BCD_int x, const BCD_int y)   {
     // multiplies two BCD ints by breaking them down into their component bytes and adding the results
     // this takes O(log_100(x) * log_100(y) * log_100(xy)) time
-    BCD_int answer = BCD_zero, addend;
     if (unlikely(x.nan || y.nan))
         return bcd_error(MUL_NAN, (x.nan) ? x.orig_error : y.orig_error);
     if (unlikely(x.zero || y.zero))
-        return answer;
-    size_t i, j, pow_10, ipow_10 = 0;
-    uint16_t staging;
-    for (i = 0; i < x.bcd_digits; i++, ipow_10 += 2)  {
-        for (j = 0, pow_10 = ipow_10; j < y.bcd_digits; j++, pow_10 += 2) {
-            if ((staging = mul_dig_pair(x.data[i], y.data[j])) == 0)
-                continue;
-            addend = new_BCD_int2(staging, false);
-            if (likely(pow_10))
-                imul_bcd_pow_10(&addend, pow_10);  // this was not added to performance analysis
-            iadd_bcd(&answer, addend);
-            free_BCD_int(&addend);
+        return BCD_zero;
+    if (unlikely(x.decimal_digits == 1 && x.data[0] == 1))
+        return sign_bcd(y, false, !(x.negative == y.negative));
+    if (unlikely(y.decimal_digits == 1 && y.data[0] == 1))
+        return sign_bcd(x, false, !(x.negative == y.negative));
+    BCD_int answer = BCD_nan, tmp;
+    const size_t digits = min(x.decimal_digits, y.decimal_digits);
+    if (x.decimal_digits + y.decimal_digits <= POW_OF_MAX_POW_10_64)    {
+        // if they're small enough to multiply directly, do so
+        return new_BCD_int2(abs_bcd_cuint(x) * abs_bcd_cuint(y), !(x.negative == y.negative));
+    }
+    else if (digits < 256)  {
+        // grid method
+        // this relies on the same principle as FOIL. basically:
+        // AB * CD = 100AC + 10(BC + AD) + BD, done for each byte
+        size_t i, j, pow_10, ipow_10 = 0;
+        uint16_t staging;
+        answer = BCD_zero;
+        for (i = 0; i < x.bcd_digits; i++, ipow_10 += 2)  {
+            for (j = 0, pow_10 = ipow_10; j < y.bcd_digits; j++, pow_10 += 2) {
+                if ((staging = mul_dig_pair(x.data[i], y.data[j])) == 0)
+                    continue;
+                tmp = new_BCD_int2(staging, false);
+                if (likely(pow_10))
+                    imul_bcd_pow_10(&tmp, pow_10);
+                iadd_bcd(&answer, tmp);
+                free_BCD_int(&tmp);
+            }
         }
     }
-    answer.negative = !(x.negative == y.negative);
-    return answer;
+    else    {
+        // recursive karatsuba
+        const size_t cutoff = digits / 2;
+        tmp = shift_bcd_left(BCD_one, cutoff);
+        // first divide each number roughly in half
+        BCD_int x_lower = mod_bcd(abs_bcd(x, true), tmp),
+                x_higher = shift_bcd_right(abs_bcd(x, true), cutoff),
+                y_lower = mod_bcd(abs_bcd(y, true), tmp),
+                y_higher = shift_bcd_right(abs_bcd(y, true), cutoff);
+        free_BCD_int(&tmp);
+        // then set up the z variables
+        BCD_int z0 = mul_bcd(x_lower, y_lower),
+                z2 = mul_bcd(x_higher, y_higher),
+                z1 = add_bcd(x_lower, x_higher);  // not final value
+        tmp = add_bcd(y_lower, y_higher);
+        imul_bcd(&z1, tmp);
+        isub_bcd(&z1, z0);
+        isub_bcd(&z1, z2);
+        free_BCD_int(&tmp);
+        free_BCD_int(&x_lower);
+        free_BCD_int(&x_higher);
+        free_BCD_int(&y_lower);
+        free_BCD_int(&y_higher);
+        ishift_bcd_left(&z2, 2 * cutoff);
+        ishift_bcd_left(&z1, cutoff);
+        answer = add_bcd(z0, z1);
+        iadd_bcd(&answer, z2);
+        free_BCD_int(&z0);
+        free_BCD_int(&z1);
+        free_BCD_int(&z2);
+    }
+    return sign_bcd(answer, true, !(x.negative == y.negative));
 }
 
 inline BCD_int div_bcd(const BCD_int x, const BCD_int y)    {
@@ -1425,7 +1484,6 @@ inline BCD_int mod_bcd(const BCD_int x, const BCD_int y)    {
 }
 
 BCD_int divmod_bcd(const BCD_int x, BCD_int y, BCD_int *mod)    {
-    // TODO: optimize this similar to mul_bcd_cuint() by stepping by 10s when possible
     BCD_int div = BCD_zero;
     if (unlikely(x.nan || y.nan || y.zero)) {
         BCD_error error, orig_error;
@@ -1466,10 +1524,13 @@ BCD_int divmod_bcd(const BCD_int x, BCD_int y, BCD_int *mod)    {
         iinc_bcd(&div);
     }
     if ((div.negative = (x_negative != y_negative)))    {
-        if (!tmp.zero)
+        if (!tmp.zero)  {
             idec_bcd(&div);
-        if (mod != NULL)
-            *mod = sign_bcd(sub_bcd(divisor, tmp), true, y_negative);
+            if (mod != NULL)
+                *mod = sign_bcd(sub_bcd(divisor, tmp), true, y_negative);
+        }
+        else if (mod != NULL)
+            *mod = BCD_zero;
         free_BCD_int(&tmp);
     }
     else if (mod != NULL) {
@@ -1482,22 +1543,37 @@ BCD_int divmod_bcd(const BCD_int x, BCD_int y, BCD_int *mod)    {
 }
 
 BCD_int pow_bcd(const BCD_int x, const BCD_int y)   {
-    // this takes O(y * 2log_100(x)^3) time
-    if (unlikely(x.nan || y.nan || y.negative || x.zero))   {
+    if (unlikely(x.nan || y.nan || y.negative)) {
         BCD_error error, orig_error;
-        orig_error = error = (y.negative) ? POW_NEG : POW_NAN;
-        if (x.nan)
-            orig_error = x.orig_error;
-        else if (y.nan)
-            orig_error = y.orig_error;
+        if (y.negative) {
+            orig_error = error = POW_NEG;
+        }
+        else    {
+            error = POW_NAN;
+            orig_error = (x.nan) ? x.orig_error : y.orig_error;
+        }
         return bcd_error(error, orig_error);
     }
-    BCD_int answer = BCD_one, tmp = copy_BCD_int(y);
-    while (!(tmp.zero || tmp.nan))  {
-        imul_bcd(&answer, x);
-        idec_bcd(&tmp);
+    if (unlikely(x.zero))
+        return BCD_zero;
+    if (unlikely((x.decimal_digits == 1 && x.data[0] == 1) || y.zero))  // x == 1 || y == 0
+        return BCD_one;
+    if (unlikely(y.decimal_digits == 1 && y.data[0] == 1))  // y == 1
+        return copy_BCD_int(x);
+    if (y.decimal_digits == 1 && y.data[0] == 2)  // y == 2
+        return mul_bcd(x, x);
+    // after all shortcuts are exhausted, solve by successive squaring
+    // ex: x^13 = x * ((x * x^2)^2)^2
+    BCD_int answer = BCD_one, tmp_x = copy_BCD_int(x), tmp_y = copy_BCD_int(y);
+    while (!tmp_y.zero) {
+        if (!tmp_y.even)    {
+            imul_bcd(&answer, tmp_x);
+        }
+        imul_bcd(&tmp_x, tmp_x);
+        idiv_bcd(&tmp_y, BCD_two);
     }
-    free_BCD_int(&tmp);
+    free_BCD_int(&tmp_x);
+    free_BCD_int(&tmp_y);
     return answer;
 }
 
@@ -1749,17 +1825,18 @@ BCD_int div_bcd_pow_10(const BCD_int a, const size_t tens)   {
     if (tens >= a.decimal_digits)
         return BCD_zero;
     BCD_int ret = (BCD_int) {
-        .decimal_digits = a.decimal_digits - tens
+        .decimal_digits = a.decimal_digits - tens,
+        .negative = a.negative
     };
     ret.bcd_digits = (ret.decimal_digits + 1) / 2;
     ret.data = (packed_BCD_pair *) malloc(sizeof(packed_BCD_pair) * ret.bcd_digits);
     if (unlikely(ret.data == NULL))
         return bcd_error(NO_MEM, NO_MEM);
-    const size_t digit_diff = a.bcd_digits - ret.bcd_digits;
     if (tens % 2 == 0)  {
         // +--+--+--+    +--+--+
         // ...|23|01| -> |23|01|
         // +--+--+--+    +--+--+
+        const size_t digit_diff = a.bcd_digits - ret.bcd_digits;
         memcpy(ret.data, a.data + digit_diff, ret.bcd_digits);
     }
     else    {
@@ -1769,6 +1846,7 @@ BCD_int div_bcd_pow_10(const BCD_int a, const size_t tens)   {
         // +--+--+--+--+    +--+--+--+
         // ...|56|34|12| -> |45|23|01|
         // +--+--+--+--+    +--+--+--+
+        const size_t digit_diff = a.bcd_digits - ret.bcd_digits - (a.decimal_digits % 2);
         ret.data[0] = a.data[digit_diff] >> 4;
         for (size_t i = 1; i < ret.bcd_digits; i++) {
             ret.data[i - 1] |= a.data[i + digit_diff] << 4;

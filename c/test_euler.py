@@ -1,9 +1,11 @@
 from atexit import register
 from functools import partial
 from itertools import chain
-from os import environ, listdir, sep, unlink
+from os import environ, sep, unlink
 from pathlib import Path
 from platform import machine, processor, system, uname
+from pprint import pprint
+from random import randrange
 from shutil import copy, rmtree, which
 from subprocess import check_call, check_output, run
 from sys import path
@@ -157,8 +159,8 @@ SOURCE_TEMPLATE = "{}{}p{{:0>4}}.c".format(C_FOLDER, sep)
 EXE_TEMPLATE = "{}{}p{{:0>4}}.{{}}.{}".format(BUILD_FOLDER, sep, EXE_EXT)
 # include sep in the recipe so that Windows won't complain
 
-GCC_TEMPLATE = "{} {{}} -O3 {} -lm -Wall -Werror -std=c11 -march=native -flto -fwhole-program -o {{}}"
-CLANG_TEMPLATE = "{} {{}} -O3 {} {} -Wall -Werror -std=c11 {} -o {{}}"
+GCC_TEMPLATE = "{} {{}} -O3 {} -lm -Wall -Werror -std=gnu11 -march=native -flto -fwhole-program -o {{}}"
+CLANG_TEMPLATE = "{} {{}} -O3 {} {} -Wall -Werror -std=gnu11 {} -o {{}}"
 
 templates = {
     'GCC': GCC_TEMPLATE.format(GCC_BINARY, ''),
@@ -178,11 +180,12 @@ templates = {
 
 @register
 def cleanup():
-    try:
-        rmtree(BUILD_FOLDER)
-    except PermissionError:  # Windows might complain an executable is still in use
-        sleep(0.5)
-        rmtree(BUILD_FOLDER)
+    for _ in range(10):
+        try:
+            rmtree(BUILD_FOLDER)
+            break
+        except PermissionError:  # Windows might complain an executable is still in use
+            sleep(0.5)
 
 
 @fixture(params=sorted(x.ljust(V_COMPILER_LEN) for x in valgrind_compilers))
@@ -201,8 +204,10 @@ def key(request):  # type: ignore
     return int(request.param)  # reduce casting burden on test
 
 
-# to make sure the benchmarks sort correctly
-@fixture(params=sorted(chain(listdir(C_FOLDER.joinpath("tests")), ("{:03}".format(x) for x in answers))))
+@fixture(params=sorted(chain(
+    (x.name for x in C_FOLDER.joinpath("tests").glob("*.c")),
+    ("{:03}".format(x) for x in answers)
+)))
 def c_file(request):  # type: ignore
     try:
         return SOURCE_TEMPLATE.format(int(request.param))
@@ -230,6 +235,8 @@ def test_compiler_macros(compiler):
 
 @mark.skipif('NO_OPTIONAL_TESTS')
 def test_deterministic_build(c_file, compiler):
+    if IN_WINDOWS and compiler != 'CL':  # mingw gcc doesn't seem to make reproducible builds
+        skip()
     exe_name1 = EXE_TEMPLATE.format("deterministic-build-{}".format(uuid4()), compiler)
     exe_name2 = EXE_TEMPLATE.format("deterministic-build-{}".format(uuid4()), compiler)
     environ['SOURCE_DATE_EPOCH'] = '1'
@@ -237,26 +244,29 @@ def test_deterministic_build(c_file, compiler):
     check_call(templates[compiler].format(c_file, exe_name1).split())
     sleep(2)
     check_call(templates[compiler].format(c_file, exe_name2).split())
-    try:
-        with open(exe_name1, "rb") as f, open(exe_name2, "rb") as g:
-            assert f.read() == g.read()
-    except AssertionError:
-        if IN_WINDOWS and compiler != 'CL':  # mingw gcc doesn't seem to make reproducible builds
-            xfail()
-        raise
+    with open(exe_name1, "rb") as f, open(exe_name2, "rb") as g:
+        assert f.read() == g.read()
 
 
 @mark.skipif('NO_OPTIONAL_TESTS or ONLY_SLOW')
-def test_bcd_int(compiler):
+def test_bcd_int(benchmark, compiler):
     exe_name = EXE_TEMPLATE.format("test_bcd_int", compiler)
     test_path = C_FOLDER.joinpath("tests", "test_bcd_int.c")
-    check_call(templates[compiler].format(test_path, exe_name).split())
-    buff = check_output([exe_name], timeout=60).decode()
+    check_call(
+        templates[compiler].format(test_path, exe_name).split() + ['-DSEED_OVERRIDE={}'.format(randrange(2**32))]
+    )
+    run_test = partial(check_output, [exe_name], timeout=60)
+    buff = benchmark.pedantic(run_test, iterations=1, rounds=1).decode()
     seed, *otherlines = buff.splitlines()
-    print(seed)
+    errors = []
+    print(buff)
+    print('')
     for line in otherlines:
         expr, answer = line.split('==')
-        assert eval(answer) == eval(expr), expr
+        if eval(answer) != eval(expr):
+            errors.append((line, eval(expr)))
+    pprint(errors)
+    assert not errors
 
 
 @mark.skipif('NO_OPTIONAL_TESTS or ONLY_SLOW')

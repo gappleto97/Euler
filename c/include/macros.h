@@ -139,7 +139,7 @@
      * @note
      * If the compiler does not support this feature, the macro does nothing and just returns x
      */
-    #define likely(x)   __builtin_expect(!!(x), 1)
+    #define likely(x) __builtin_expect(!!(x), 1)
 
     /**
      * @brief Indicates to the compiler (if supported) that this branch is unlikely to occur and it should arrange code accordingly
@@ -149,9 +149,18 @@
      * If the compiler does not support this feature, the macro does nothing and just returns x
      */
     #define unlikely(x) __builtin_expect(!!(x), 0)
+
+    /**
+     * @brief Indicates to the compiler that the structure defined within should be packed bitwise
+     * @param decl A struct declaration
+     * @note
+     * Unlike simply saying __attribute__((__packed__)), this is supporeted on CL as well
+     */
+    #define PACK(decl) decl __attribute__((__packed__))
 #else
     #define likely(x) (x)
     #define unlikely(x) (x)
+    #define PACK(decl) __pragma(pack(push, 1)) decl __pragma(pack(pop))
 #endif
 
 // constants section
