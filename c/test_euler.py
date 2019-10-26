@@ -1,6 +1,7 @@
 from atexit import register
 from functools import partial
 from itertools import chain
+from math import factorial  # noqa: F401
 from os import environ, sep, unlink
 from pathlib import Path
 from platform import machine, processor, system, uname
@@ -159,8 +160,9 @@ SOURCE_TEMPLATE = "{}{}p{{:0>4}}.c".format(C_FOLDER, sep)
 EXE_TEMPLATE = "{}{}p{{:0>4}}.{{}}.{}".format(BUILD_FOLDER, sep, EXE_EXT)
 # include sep in the recipe so that Windows won't complain
 
-GCC_TEMPLATE = "{} {{}} -O3 {} -lm -Wall -Werror -std=gnu11 -march=native -flto -fwhole-program -o {{}}"
-CLANG_TEMPLATE = "{} {{}} -O3 {} {} -Wall -Werror -std=gnu11 {} -o {{}}"
+GCC_TEMPLATE = ("{} {{}} -O3 {} -lm -Wall -Werror -Wno-error=format=* -Wno-error=format-extra-args -std=gnu11 "
+                "-Wno-initializer-overrides -march=native -flto -fwhole-program -o {{}}")
+CLANG_TEMPLATE = ("{} {{}} -O3 {} {} -Wall -Werror -Wno-initializer-overrides -std=gnu11 {} -o {{}}")
 
 templates = {
     'GCC': GCC_TEMPLATE.format(GCC_BINARY, ''),
@@ -255,7 +257,7 @@ def test_bcd_int(benchmark, compiler):
     check_call(
         templates[compiler].format(test_path, exe_name).split() + ['-DSEED_OVERRIDE={}'.format(randrange(2**32))]
     )
-    run_test = partial(check_output, [exe_name], timeout=60)
+    run_test = partial(check_output, [exe_name], timeout=120)
     buff = benchmark.pedantic(run_test, iterations=1, rounds=1).decode()
     seed, *otherlines = buff.splitlines()
     errors = []

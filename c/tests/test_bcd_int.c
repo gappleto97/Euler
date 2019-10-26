@@ -3,7 +3,7 @@
 #include "./test_utils.h"
 #include "../include/bcd.h"
 
-typedef enum {ADD, SUB, MUL, DIV, MOD, POW, LSHIFT, RSHIFT, END} Operation;
+typedef enum {ADD, SUB, MUL, DIV, MOD, POW, LSHIFT, RSHIFT, FACT, END} Operation;
 const char op_symbols[END][6] = {"+", "-", "*", "//", "%", "**", "*10**"};
 const unsigned char counts[6] = {1, 2, 3, 4, 5, 6};
 
@@ -27,23 +27,30 @@ int main(int argc, char const *argv[])  {
         for (Operation op = ADD; op < END; op++)    {
             for (unsigned char i = 0; i < 3; i++)   {
                 for (unsigned char j = 0; j < 6; j++)   {
-                    if (op == RSHIFT)   {
-                        printf("int(str");
+                    if (op == FACT) {
+                        printf("factorial(");
+                        tmp = mul_bcd_cuint(pows[i], (rand() - 1) % 20 + 1);
+                        print_bcd(tmp);
                     }
-                    printf("(");
-                    print_bcd(arr[i]);
-                    if (op == RSHIFT)
-                        printf(")[:-%i]", counts[j]);
-                    else
-                        printf(") %s (", op_symbols[op]);
-                    if (op == POW)
-                        print_bcd(pows[j]);
-                    else if (op == LSHIFT)
-                        printf("%i", counts[j]);
-                    else if (op == RSHIFT)
-                        ;
-                    else
-                        print_bcd(arr[j]);
+                    else    {
+                        if (op == RSHIFT)   {
+                            printf("int(str");
+                        }
+                        printf("(");
+                        print_bcd(arr[i]);
+                        if (op == RSHIFT)
+                            printf(")[:-%i] or '0'", counts[j]);
+                        else
+                            printf(") %s (", op_symbols[op]);
+                        if (op == POW)
+                            print_bcd(pows[j]);
+                        else if (op == LSHIFT)
+                            printf("%i", counts[j]);
+                        else if (op == RSHIFT)
+                            ;
+                        else
+                            print_bcd(arr[j]);
+                    }
                     ns = perf_time();
                     switch(op)  {
                     case ADD:
@@ -69,6 +76,9 @@ int main(int argc, char const *argv[])  {
                         break;
                     case RSHIFT:
                         tmp = shift_bcd_right(arr[i], counts[j]);
+                        break;
+                    case FACT:
+                        ifactorial_bcd(&tmp);
                         break;
                     default:
                         return -1;

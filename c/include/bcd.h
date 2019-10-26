@@ -1411,13 +1411,12 @@ BCD_int mul_bcd(const BCD_int x, const BCD_int y)   {
         return sign_bcd(y, false, !(x.negative == y.negative));
     if (unlikely(y.decimal_digits == 1 && y.data[0] == 1))
         return sign_bcd(x, false, !(x.negative == y.negative));
+    if (x.decimal_digits + y.decimal_digits < POW_OF_MAX_POW_10_64)
+        return new_BCD_int2(abs_bcd_cuint(x) * abs_bcd_cuint(y), !(x.negative == y.negative));
+        // if they're small enough to multiply directly, do so
     BCD_int answer = BCD_nan, tmp;
     const size_t digits = min(x.decimal_digits, y.decimal_digits);
-    if (x.decimal_digits + y.decimal_digits <= POW_OF_MAX_POW_10_64)    {
-        // if they're small enough to multiply directly, do so
-        return new_BCD_int2(abs_bcd_cuint(x) * abs_bcd_cuint(y), !(x.negative == y.negative));
-    }
-    else if (digits < 256)  {
+    if (digits < 256)   {
         // grid method
         // this relies on the same principle as FOIL. basically:
         // AB * CD = 100AC + 10(BC + AD) + BD, done for each byte
@@ -1448,8 +1447,8 @@ BCD_int mul_bcd(const BCD_int x, const BCD_int y)   {
         free_BCD_int(&tmp);
         // then set up the z variables
         BCD_int z0 = mul_bcd(x_lower, y_lower),
-                z2 = mul_bcd(x_higher, y_higher),
-                z1 = add_bcd(x_lower, x_higher);  // not final value
+                z1 = add_bcd(x_lower, x_higher),  // not final value
+                z2 = mul_bcd(x_higher, y_higher);
         tmp = add_bcd(y_lower, y_higher);
         imul_bcd(&z1, tmp);
         isub_bcd(&z1, z0);
@@ -1681,7 +1680,7 @@ uintmax_t abs_bcd_cuint(const BCD_int x)    {
     for (size_t i = 0; i < x.bcd_digits; i++, pow_10 *= 100) {
         answer += pow_10 * ((x.data[i] & 0x0F) + 10 * (x.data[i] >> 4));
     }
-    if ((x.data[0] % 0xF) != (answer % 10))
+    if ((x.data[0] & 0xF) != (answer % 10))
         return -1;  // overflowed
     return answer;
 }
