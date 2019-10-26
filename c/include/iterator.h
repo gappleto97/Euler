@@ -15,6 +15,9 @@
 namespace c::include::iterator {
 #endif
 
+void no_destructor(void *it);
+inline void no_destructor(void *it) {}
+
 /**
  * @brief The base definition macro for all iterators in this project
  * @param return_type The type that your iterator will yield
@@ -42,7 +45,7 @@ namespace c::include::iterator {
  */
 #define IteratorTail(return_type, struct_type) \
     return_type (*const iterator_function)(struct_type *it); /**< @private The pointer to the iteration function @see next */\
-    void (*const destructor)(struct_type *it); /**< @private The pointer to the destructor function @see free_iterator @cond EXPAND_ITERATOR_TAIL */\
+    void (*const destructor)(void *it); /**< @private The pointer to the destructor function @see free_iterator @cond EXPAND_ITERATOR_TAIL */\
     bool exhausted : 1;\
     bool started : 1;\
     bool phase : 1; /** @endcond */
@@ -105,7 +108,7 @@ namespace c::include::iterator {
  * }
  * @endcode
  */
-#define IteratorInitHead(advance, ...) {.iterator_function = &advance, __VA_ARGS__}
+#define IteratorInitHead(advance, ...) {.iterator_function = &advance, AddDestructor(no_destructor), __VA_ARGS__}
 
 /**
  * @brief The extension macro for initializing @ref c::include::iterator::Iterator "Iterators" with a destructor
@@ -118,6 +121,11 @@ namespace c::include::iterator {
  * @code{.c}
  * void function_name(iterator_subclass *is)
  * @endcode
+ * Note, however, that it will be cast to
+ * @code{.c}
+ * void (*)(void *)
+ * @endcode
+ * for compatibility with the default destructor. This means that you may not see a type error if you enter it incorrectly.
  *
  * Assignment example:
  * @code{.c}
@@ -134,7 +142,7 @@ namespace c::include::iterator {
  * }
  * @endcode
  */
-#define AddDestructor(func) ExtendInit(destructor, &func)
+#define AddDestructor(func) ExtendInit(destructor, (void (*const)(void *)) &func)
 
 /**
  * @brief The extension macro for initializing more complicated @ref c::include::iterator::Iterator "Iterators"
@@ -196,7 +204,7 @@ namespace c::include::iterator {
  * That does not mean you should not call this function, as that may change in the future,
  * and on most compilers it typically adds very little overhead (order of 3 instructions).
  */
-#define free_iterator(it) do {if (it.destructor != NULL) (*(it.destructor))(&it);} while(0)
+#define free_iterator(it) (*(it.destructor))(&it)
 
 /**
  * @brief The generic destructor for iterator pointers
@@ -211,7 +219,7 @@ namespace c::include::iterator {
  * That does not mean you should not call this function, as that may change in the future,
  * and on most compilers it typically adds very little overhead (order of 3 instructions).
  */
-#define free_iterator_p(it) do {if (it->destructor != NULL) (*(it->destructor))(it);} while(0)
+#define free_iterator_p(it) (*(it->destructor))(it)
 
 typedef struct Iterator Iterator;
 /**
