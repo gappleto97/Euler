@@ -20,7 +20,7 @@ int main(int argc, char const *argv[])  {
     pows[] = {new_BCD_int1(2), new_BCD_int1(3), new_BCD_int1(5), new_BCD_int1(7), new_BCD_int1(11), new_BCD_int1(13)},
     arr[] = {new_BCD_int1(nz_rand()), new_BCD_int1(-nz_rand()), new_BCD_int2(nz_rand(), rand() % 2),
              new_BCD_int1(nz_rand()), new_BCD_int1(-nz_rand()), new_BCD_int2(nz_rand(), rand() % 2)};
-    for (unsigned char a = 0; a < 13; a++)  {
+    for (unsigned char a = 0; a < 10; a++)  {
         for (unsigned char b = 0; b < 3; b++)   {
             imul_bcd_cuint(&(arr[b]), nz_rand());
         }
