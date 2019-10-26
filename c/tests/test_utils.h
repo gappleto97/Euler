@@ -4,7 +4,7 @@
 #include <time.h>
 #include "../include/macros.h"
 
-#if (CL_COMPILER || defined(__MINGW32__))
+#if (CL_COMPILER || defined(__MINGW32__) || defined(_WIN32) || defined(WIN32))
     #include <windows.h> // for QueryPerformanceCounter()
 #endif
 
