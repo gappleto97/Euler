@@ -276,8 +276,8 @@ static inline uintmax_t iterate_counter(counter *i) {
  *
  * @returns A @ref counter
  */
-counter counter3(uintmax_t start, uintmax_t stop, intmax_t step);
-inline counter counter3(uintmax_t start, uintmax_t stop, intmax_t step) {
+counter count_by(uintmax_t start, uintmax_t stop, intmax_t step);
+inline counter count_by(uintmax_t start, uintmax_t stop, intmax_t step) {
     return (counter) IteratorInitHead(
         iterate_counter,
         ExtendInit(idx, start),
@@ -294,9 +294,9 @@ inline counter counter3(uintmax_t start, uintmax_t stop, intmax_t step) {
  *
  * @returns A @ref counter
  */
-counter counter2(uintmax_t start, uintmax_t stop);
-inline counter counter2(uintmax_t start, uintmax_t stop)  {
-    return counter3(start, stop, 1);
+counter count_in_range(uintmax_t start, uintmax_t stop);
+inline counter count_in_range(uintmax_t start, uintmax_t stop)  {
+    return count_by(start, stop, 1);
 }
 
 /**
@@ -306,9 +306,9 @@ inline counter counter2(uintmax_t start, uintmax_t stop)  {
  *
  * @returns A @ref counter
  */
-counter counter1(uintmax_t stop);
-inline counter counter1(uintmax_t stop)    {
-    return counter2(0, stop);
+counter count_to(uintmax_t stop);
+inline counter count_to(uintmax_t stop)    {
+    return count_in_range(0, stop);
 }
 
 #ifdef DOXYGEN
