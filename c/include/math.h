@@ -10,13 +10,13 @@ namespace c::include::math {
 #include <stdlib.h>
 #include <stdint.h>
 
-uintmax_t factorial(unsigned int n);
-inline uintmax_t factorial(unsigned int n)  {
+uintmax_t factorial(unsigned char n);
+inline uintmax_t factorial(unsigned char n) {
     // note that this function only works for numbers smaller than MAX_FACTORIAL_64
     if ((sizeof(uintmax_t) == 8 && n > MAX_FACTORIAL_64) || (sizeof(uintmax_t) == 16 && n > MAX_FACTORIAL_128))
         return -1;
     uintmax_t ret = 1;
-    for (unsigned int i = 2; i <= n; ++i) {
+    for (unsigned char i = 2; i <= n; ++i)  {
         ret *= i;
     }
     return ret;
@@ -89,7 +89,7 @@ uintmax_t n_choose_r(const unsigned int n, const unsigned int r)    {
         }
     }
     #if CL_COMPILER
-    free(factors);
+        free(factors);
     #endif
     return answer;
 }
