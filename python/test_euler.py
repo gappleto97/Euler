@@ -155,7 +155,7 @@ def test_is_prime(benchmark: Any) -> None:
     with PY_FOLDER.joinpath('primes.mpack').open('rb') as f:
         set_of_primes = umsgpack.load(f)  # set of first million primes
     benchmark.pedantic(func, args=(set_of_primes, ), iterations=1, rounds=1)
-    if hasattr(benchmark, 'stats') and benchmark.stats.stats.max > (200 * 1_000_000 / 1_000_000):  # 200ns * primes
+    if benchmark.stats is not None and benchmark.stats.stats.max > (200 * 1_000_000 / 1_000_000):  # 200ns * primes
         pytest.fail("Exceeding 200ns average!")
 
 
@@ -171,7 +171,7 @@ def test_problem(benchmark: Any, key: int) -> None:
     del test_func
     gc.collect()
     # sometimes benchmark disables itself, so check for .stats
-    if hasattr(benchmark, 'stats') and benchmark.stats.stats.median > 60:
+    if benchmark.stats is not None and benchmark.stats.stats.median > 60:
         fail_func = pytest.xfail if key in known_slow else pytest.fail
         stats = benchmark.stats.stats
         fail_func("Exceeding 60s! (Max={:.6}s, Median={:.6}s)".format(stats.max, stats.median))

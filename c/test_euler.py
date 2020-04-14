@@ -170,13 +170,14 @@ templates = {
     'CL': "cl -Fe:{{1}} -Fo{}\\ -O2 -GL -GF -Brepro -WX -W3 -TC {{0}}".format(BUILD_FOLDER.joinpath('objects')),
     'ICC': GCC_TEMPLATE.format('icc', ''),
     'AOCC': CLANG_TEMPLATE.format(AOCC_BINARY, CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=1'),
-    'debug': {
-        'GCC': GCC_TEMPLATE.format(GCC_BINARY, '-g'),
-        'CLANG': CLANG_TEMPLATE.format('clang', CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=0 -g'),
-        # CL would go here if I thought it worked with gdb/valgrind
-        'ICC': GCC_TEMPLATE.format('icc', '-g'),
-        'AOCC': CLANG_TEMPLATE.format(AOCC_BINARY, CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=1 -g'),
-    }
+}
+
+debug_templates = {
+    'GCC': GCC_TEMPLATE.format(GCC_BINARY, '-g'),
+    'CLANG': CLANG_TEMPLATE.format('clang', CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=0 -g'),
+    # CL would go here if I thought it worked with gdb/valgrind
+    'ICC': GCC_TEMPLATE.format('icc', '-g'),
+    'AOCC': CLANG_TEMPLATE.format(AOCC_BINARY, CLANG_LINK_MATH, CLANG_ARCH, '-DAMD_COMPILER=1 -g'),
 }
 
 
@@ -292,7 +293,7 @@ def test_is_prime(benchmark, compiler):
             assert idx == -1 or prime_cache[idx] == num
 
     # sometimes benchmark disables itself, so check for .stats
-    if hasattr(benchmark, 'stats') and benchmark.stats.stats.max > 200 * MAX_PRIME // 1000000:
+    if benchmark.stats is not None and benchmark.stats.stats.max > 200 * MAX_PRIME // 1000000:
         fail("Exceeding 200ns average! (time={}s)".format(benchmark.stats.stats.max))
 
 
@@ -310,7 +311,7 @@ def test_problem(benchmark, key, compiler):
         answer = benchmark(run_test)
     assert answers[key] == int(answer.strip())
     # sometimes benchmark disables itself, so check for .stats
-    if hasattr(benchmark, 'stats') and benchmark.stats.stats.median > 60:
+    if benchmark.stats is not None and benchmark.stats.stats.median > 60:
         fail_func = xfail if key in known_slow else fail
         stats = benchmark.stats.stats
         fail_func("Exceeding 60s! (Max={:.6}s, Median={:.6}s)".format(stats.max, stats.median))
@@ -320,7 +321,7 @@ if valgrind_compilers:
     if which('valgrind'):
         valgrind_test_exe_name = EXE_TEMPLATE.format('valgrind-check-{}'.format(uuid4()), valgrind_compilers[0])
         check_call(
-            templates['debug'][valgrind_compilers[0]].format(
+            debug_templates[valgrind_compilers[0]].format(
                 C_FOLDER.joinpath('p0000_template.c'),
                 valgrind_test_exe_name
             ).split())
@@ -330,7 +331,7 @@ if valgrind_compilers:
             if (NO_SLOW and key in known_slow) or (ONLY_SLOW and key not in known_slow) or NO_OPTIONAL_TESTS:
                 skip()
             exe_name = EXE_TEMPLATE.format("valgrind-{}".format(uuid4()), v_compiler)
-            check_call(templates['debug'][v_compiler].format(c_file, exe_name).split())
+            check_call(debug_templates[v_compiler].format(c_file, exe_name).split())
             if VALGRIND_ERR_LIST:
                 args = ['valgrind', '--error-exitcode=1', '--leak-check=yes', '-s', exe_name]
             else:
@@ -342,7 +343,7 @@ if valgrind_compilers:
             if (NO_SLOW and key in known_slow) or (ONLY_SLOW and key not in known_slow) or NO_OPTIONAL_TESTS:
                 skip()
             exe_name = EXE_TEMPLATE.format("pahole-{}".format(uuid4()), v_compiler)
-            check_call(templates['debug'][v_compiler].format(c_file, exe_name).split())
+            check_call(debug_templates[v_compiler].format(c_file, exe_name).split())
             args = ['pahole', exe_name, '-ERS', '-x', '_IO_FILE']
             buff = check_output(args).decode()
             print(buff)
