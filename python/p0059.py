@@ -31,17 +31,17 @@ a file containing the encrypted ASCII codes, and the knowledge that the plain
 text must contain common English words, decrypt the message and find the sum of
 the ASCII values in the original text.
 """
-from itertools import cycle, permutations
-from pathlib import Path
+import itertools
+import pathlib
 
 alphabet = b'abcdefghijklmnopqrtsuvwxyz'
 
 
 def main() -> int:
-    with Path(__file__).parent.parent.joinpath('_data', 'p0059_cipher.txt').open('r') as f:
+    with pathlib.Path(__file__).parent.parent.joinpath('_data', 'p0059_cipher.txt').open('r') as f:
         ciphertext = bytes(int(x) for x in f.read().split(','))
-    for key in permutations(alphabet, 3):
-        plaintext = bytes(x ^ y for x, y in zip(ciphertext, cycle(key)))
+    for key in itertools.permutations(alphabet, 3):
+        plaintext = bytes(x ^ y for x, y in zip(ciphertext, itertools.cycle(key)))
         if b'beginning' in plaintext:
             return sum(plaintext)
     return -1

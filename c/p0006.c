@@ -21,6 +21,10 @@ natural numbers and the square of the sum.
 */
 #include <stdio.h>
 
+#ifdef DOXYGEN
+namespace c::p0006 {
+#endif
+
 
 int main(int argc, char const *argv[])  {
     unsigned long long sum = 100 * 101 / 2, sum_of_squares = 0;
@@ -30,3 +34,7 @@ int main(int argc, char const *argv[])  {
     printf("%llu", sum * sum - sum_of_squares);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

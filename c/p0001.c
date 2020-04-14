@@ -16,20 +16,28 @@ Find the sum of all the multiples of 3 or 5 below 1000.
 #include <stdio.h>
 #include "include/iterator.h"
 
+#ifdef DOXYGEN
+namespace c::p0001 {
+#endif
+
 int main(int argc, char const *argv[])  {
     unsigned long long answer = 0;
-    counter c = counter3(0, 1000, 3);
-    while (!c.exhausted)    {
-        answer += next(c);
+    counter a = count_by(0, 1000, 3);
+    while (!a.exhausted)    {
+        answer += next(a);
     }
-    c = counter3(0, 1000, 5);
-    while (!c.exhausted)    {
-        answer += next(c);
+    counter b = count_by(0, 1000, 5);
+    while (!b.exhausted)    {
+        answer += next(b);
     }
-    c = counter3(0, 1000, 15);
+    counter c = count_by(0, 1000, 15);
     while (!c.exhausted)    {
         answer -= next(c);
     }
     printf("%llu\n", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

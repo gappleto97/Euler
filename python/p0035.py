@@ -17,7 +17,7 @@ How many circular primes are there below one million?
 """
 from typing import Iterator
 
-from p0007 import is_prime
+import p0007
 
 
 def rotations(x: int) -> Iterator[int]:
@@ -29,7 +29,7 @@ def rotations(x: int) -> Iterator[int]:
 def main() -> int:
     answer = 0
     for x in range(1000000):
-        if all(is_prime(r) for r in rotations(x)):
+        if all(p0007.is_prime(r) for r in rotations(x)):
             answer += 1
     return answer
 

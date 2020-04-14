@@ -15,11 +15,11 @@ routes to the bottom right corner.
 How many such routes are there through a 20×20 grid?
 
 """
-from math import factorial
+import math
 
 
 def n_choose_r(n, r):
-    return factorial(n) // factorial(r) // factorial(n - r)
+    return math.factorial(n) // math.factorial(r) // math.factorial(n - r)
 
 
 def lattice_paths(height: int, width: int):

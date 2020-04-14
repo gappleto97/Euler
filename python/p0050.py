@@ -20,21 +20,21 @@ Which prime, below one-million, can be written as the sum of the most consecutiv
 """
 from typing import List
 
-from p0003 import primes
-from p0007 import is_prime
-from p0008 import groupwise
+import p0003
+import p0007
+import p0008
 
 
 def main() -> int:
-    iter_primes = iter(primes())
+    iter_primes = iter(p0003.primes())
     cached_primes: List[int] = []
     while sum(cached_primes) < 1_000_000:
         cached_primes.append(next(iter_primes))
     cached_primes.pop()
     for number in range(len(cached_primes), 21, -1):
-        for group in groupwise(cached_primes, number):
+        for group in p0008.groupwise(cached_primes, number):
             total = sum(group)
-            if is_prime(total):
+            if p0007.is_prime(total):
                 return total
     return -1
 

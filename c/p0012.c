@@ -29,26 +29,37 @@ divisors?
 #include <stdio.h>
 #include "include/factors.h"
 
+#ifdef DOXYGEN
+namespace c::p0012 {
+#endif
+
 typedef struct triangle_iterator triangle_iterator;
+/**
+ * @implements c::include::iterator::Iterator
+ */
 struct triangle_iterator    {
     unsigned long long current;
     unsigned long long idx;
-    IteratorTail(unsigned long long, triangle_iterator);
+    IteratorTail(unsigned long long, triangle_iterator)
 };
 
+/**
+ * @memberof triangle_iterator
+ * @private
+ */
 unsigned long long advance_triangle_iterator(triangle_iterator *ti) {
-    // IterationHead(ti);
+    IterationHead(ti);
     ti->idx++;
     ti->current += ti->idx;
     return ti->current;
 }
 
-triangle_iterator triangle_iterator0()  {
-    triangle_iterator ret;
-    IteratorInitHead(ret, advance_triangle_iterator);
-    ret.current = 0;
-    ret.idx = 0;
-    return ret;
+/**
+ * @memberof triangle_iterator
+ */
+triangle_iterator triangle_iterator0();
+inline triangle_iterator triangle_iterator0()   {
+    return (triangle_iterator) IteratorInitHead(advance_triangle_iterator);
 }
 
 int main(int argc, char const *argv[])  {
@@ -64,3 +75,7 @@ int main(int argc, char const *argv[])  {
     }
     return -1;
 }
+
+#ifdef DOXYGEN
+}
+#endif

@@ -24,14 +24,14 @@ It is not until n=23
 How many, not necessarily distinct, values of nCr
 for 1≤n≤100, are greater than one-million?
 """
-from p0015 import n_choose_r
+import p0015
 
 
 def main():
     answer = 0
     for n in range(101):
         for r in range(2, n-1):
-            if n_choose_r(n, r) > 1_000_000:
+            if p0015.n_choose_r(n, r) > 1_000_000:
                 answer += 1
     return answer
 

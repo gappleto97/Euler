@@ -4,48 +4,65 @@
 #include "macros.h"
 #include "iterator.h"
 
-#if !PCC_COMPILER
-    #include <stdlib.h>
-    #include <math.h>
-#else
-    #include "math.h"
+#include <stdlib.h>
+#include <math.h>
+
+#ifdef DOXYGEN
+namespace c::include::digits {
 #endif
 
 typedef struct digit_counter digit_counter;
+/**
+ * @implements c::include::iterator::Iterator
+ */
 struct digit_counter    {
     unsigned char *digits;
     size_t idx;
-    IteratorTail(unsigned char, digit_counter);
+    IteratorTail(unsigned char, digit_counter)
 };
 
-unsigned char advance_digit_counter(digit_counter *dc)  {
+/**
+ * @memberof digit_counter
+ * @private
+ */
+static unsigned char advance_digit_counter(digit_counter *dc)   {
     IterationHead(dc);
     unsigned char ret = dc->digits[dc->idx--];
     dc->exhausted = (dc->idx == -1);
     return ret;
 }
 
+/**
+ * @memberof digit_counter
+ * @private
+ */
+void free_digit_counter(digit_counter *dc)  {
+    if (dc->digits != NULL) {
+        free(dc->digits);
+    }
+}
+
+/**
+ * @memberof digit_counter
+ */
 digit_counter digits(uintmax_t n)  {
-    digit_counter ret;
-    IteratorInitHead(ret, advance_digit_counter);
-#if !PCC_COMPILER
-    size_t digit_len = ceil(log10(n + 1));
-#else
-    size_t digit_len = imprecise_log10(n + 1);
-#endif
-    ret.digits = (unsigned char *) malloc(digit_len * sizeof(unsigned char));
+    const size_t digit_len = (size_t) ceil(log10((double) (n + 1)));
+    digit_counter ret = IteratorInitHead(
+        advance_digit_counter,
+        AddDestructor(free_digit_counter),
+        ExtendInit(digits, (unsigned char *) malloc(digit_len * sizeof(unsigned char))),
+        ExtendInit(idx, digit_len - 1)
+    );
     for (size_t i = 0; i < digit_len; i++)    {
         ret.digits[i] = n % 10;
         n /= 10;
     }
-    ret.idx = digit_len - 1;
     return ret;
 }
 
-void free_digit_counter(digit_counter dc)   {
-    if (dc.digits != NULL)  {
-        free(dc.digits);
-    }
-}
+
+#ifdef DOXYGEN
+};
+#endif
 
 #endif

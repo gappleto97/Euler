@@ -14,14 +14,14 @@ For example, 3**2 + 4**2 = 9 + 16 = 25 = 5**2.
 There exists exactly one Pythagorean triplet for which a + b + c = 1000.
 Find the product abc.
 """
-from functools import reduce
-from itertools import count
-from operator import mul
+import functools
+import itertools
+import operator
 from typing import Iterator, Tuple
 
 
 def triples() -> Iterator[Tuple[int, int, int]]:
-    for c in count(3):
+    for c in itertools.count(3):
         for b in range(2, c):
             for a in range(1, b):
                 if a**2 + b**2 == c**2:
@@ -31,7 +31,7 @@ def triples() -> Iterator[Tuple[int, int, int]]:
 def main() -> int:
     for triple in triples():
         if sum(triple) == 1000:
-            return reduce(mul, triple, 1)
+            return functools.reduce(operator.mul, triple, 1)
     return -1
 
 

@@ -17,6 +17,10 @@ four million, find the sum of the even-valued terms.
 #include <stdio.h>
 #include "include/fibonacci.h"
 
+#ifdef DOXYGEN
+namespace c::p0002 {
+#endif
+
 int main(int argc, char const *argv[])  {
     unsigned long long answer = 0;
     fibonacci fib = fibonacci1(3999999);
@@ -28,3 +32,7 @@ int main(int argc, char const *argv[])  {
     printf("%llu\n", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

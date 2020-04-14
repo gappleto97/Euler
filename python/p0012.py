@@ -27,16 +27,16 @@ We can see that 28 is the first triangle number to have over five divisors.
 What is the value of the first triangle number to have over five hundred
 divisors?
 """
-from itertools import count
+import itertools
 
-from p0021 import proper_divisors
+import p0021
 
 
 def main() -> int:
     num = 0
-    for x in count(1):
+    for x in itertools.count(1):
         num += x
-        if sum(1 for _ in proper_divisors(num)) > 499:
+        if sum(1 for _ in p0021.proper_divisors(num)) > 499:
             return num
     return -1
 

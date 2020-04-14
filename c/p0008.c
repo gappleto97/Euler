@@ -33,6 +33,10 @@ Find the thirteen adjacent digits in the 1000-digit number that have the greates
 #include <stdio.h>
 #include "include/macros.h"
 
+#ifdef DOXYGEN
+namespace c::p0008 {
+#endif
+
 
 int main(int argc, char const *argv[])  {
     size_t i, j;
@@ -71,3 +75,7 @@ int main(int argc, char const *argv[])  {
     printf("%llu", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

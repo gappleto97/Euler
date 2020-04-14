@@ -23,6 +23,10 @@ NOTE: Once the chain starts the terms are allowed to go above one million.
 #include <stdio.h>
 #include "include/macros.h"
 
+#ifdef DOXYGEN
+namespace c::p0014 {
+#endif
+
 #define CACHE_SIZE 1000000
 static unsigned int collatz_len_cache[CACHE_SIZE] = {0, 1, 0};
 
@@ -57,3 +61,7 @@ int main(int argc, char const *argv[])  {
     printf("%llu", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

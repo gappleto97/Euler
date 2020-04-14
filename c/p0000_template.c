@@ -9,9 +9,17 @@ This paragraph should be replaced by the problem description, excluding images.
 */
 #include <stdio.h>
 
+#ifdef DOXYGEN
+namespace c::p0000_template {
+#endif
+
 
 int main(int argc, char const *argv[])  {
     unsigned long long answer = 0;
     printf("%llu", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

@@ -19,22 +19,22 @@ than one in value, and containing two digits in the numerator and denominator.
 If the product of these four fractions is given in its lowest common terms,
 find the value of the denominator.
 """
-from fractions import Fraction
-from itertools import combinations
+import fractions
+import itertools
 
 
 def main() -> int:
-    answer = Fraction(1, 1)
+    answer = fractions.Fraction(1, 1)
     counter = 0
-    for num, denom in combinations(range(10, 100), 2):
-        frac = Fraction(num, denom)
+    for num, denom in itertools.combinations(range(10, 100), 2):
+        frac = fractions.Fraction(num, denom)
         if frac < 1:
             rnum = repr(num)
             rdenom = repr(denom)
             if any(x in rdenom for x in rnum):
                 if not any(x == y for x, y in zip(rnum, rdenom)):
-                    if any(Fraction(int(rnum[x]), int(rdenom[y])) == frac
-                           for x, y in combinations(range(len(rnum)), 2)
+                    if any(fractions.Fraction(int(rnum[x]), int(rdenom[y])) == frac
+                           for x, y in itertools.combinations(range(len(rnum)), 2)
                            if rdenom[y] != "0"):
                         answer *= frac
                         counter += 1

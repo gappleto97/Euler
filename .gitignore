@@ -9,3 +9,4 @@ javascript/node_modules/**
 **/build/**
 venv/**
 **/build/**
+docs/**

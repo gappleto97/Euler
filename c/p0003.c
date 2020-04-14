@@ -14,13 +14,21 @@ What is the largest prime factor of the number 600851475143 ?
 #include <stdio.h>
 #include "include/primes.h"
 
+#ifdef DOXYGEN
+namespace c::p0003 {
+#endif
+
 int main(int argc, char const *argv[])  {
     unsigned long long answer = 0;
     prime_factor_counter pfc = prime_factors(600851475143);
     while (!pfc.exhausted)   {
         answer = next(pfc);
     }
-    free_prime_factor_counter(pfc);
+    free_iterator(pfc);
     printf("%llu\n", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

@@ -38,7 +38,7 @@ is the same challenge with a triangle containing one-hundred rows; it cannot be 
 clever method! ;o)
 
 """
-from itertools import tee
+import itertools
 from typing import Sequence
 
 
@@ -46,7 +46,7 @@ def reduce_triangle(triangle: Sequence[Sequence[int]]) -> int:
     centering = (len(triangle[-1]) + 1)
     potential_totals = [0] * centering
     for parent in reversed(triangle):
-        head1, head2 = tee(iter(potential_totals))
+        head1, head2 = itertools.tee(iter(potential_totals))
         next(head2, None)
         potential_totals = [max((x, y)) + z for x, y, z in zip(head1, head2, parent)]
         # print("   ".join("{:03}".format(val) for val in potential_totals).center(centering * 6))

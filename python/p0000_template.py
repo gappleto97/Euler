@@ -9,7 +9,7 @@ This paragraph should be replaced by the problem description, excluding images.
 """
 
 
-def main():
+def main() -> int:
     pass
 
 

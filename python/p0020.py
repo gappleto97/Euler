@@ -13,11 +13,11 @@ and the sum of the digits in the number 10! is 3 + 6 + 2 + 8 + 8 + 0 + 0 = 27.
 
 Find the sum of the digits in the number 100!
 """
-from math import factorial
+import math
 
 
 def main() -> int:
-    return sum(int(x) for x in repr(factorial(100)))
+    return sum(int(x) for x in repr(math.factorial(100)))
 
 
 if __name__ == '__main__':

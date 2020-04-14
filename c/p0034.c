@@ -14,20 +14,27 @@ Note: as 1! = 1 and 2! = 2 are not sums they are not included.
 #include "include/digits.h"
 #include "include/math.h"
 
+#ifdef DOXYGEN
+namespace c::p0034 {
+#endif
+
 int main(int argc, char const *argv[])  {
     unsigned long long answer = 0, sum;
-    digit_counter dc;
     for (unsigned long i = 10; i < 100000; i++) {
         sum = 0;
-        dc = digits(i);
+        digit_counter dc = digits(i);
         while (!dc.exhausted)   {
             sum += factorial(next(dc));
         }
         if (sum == i)   {
             answer += i;
         }
-        free_digit_counter(dc);
+        free_iterator(dc);
     }
     printf("%llu", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

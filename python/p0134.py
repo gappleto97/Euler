@@ -22,7 +22,7 @@ by p1 and n is divisible by p2. Let S be the smallest of these values of n.
 
 Find ∑ S for every pair of consecutive primes with 5 ≤ p1 ≤ 1000000.
 """
-from p0003 import primes
+import p0003
 
 
 def mul_inv(a: int, b: int):
@@ -44,7 +44,7 @@ def mul_inv(a: int, b: int):
 def main() -> int:
     answer: int = 0
     pow_10: int = 10
-    iterator = primes(1000005)  # iterate over primes <1000005
+    iterator = p0003.primes(1000005)  # iterate over primes <1000005
     next(iterator)  # skip 2
     next(iterator)  # skip 3
     p1: int = next(iterator)  # p1 = 5

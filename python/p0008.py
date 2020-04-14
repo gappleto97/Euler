@@ -43,16 +43,16 @@ greatest product. What is the value of this product?
 """
 from __future__ import generator_stop
 
-from functools import reduce
-from itertools import tee
-from operator import mul
+import functools
+import itertools
+import operator
 from typing import Iterable, Iterator, Tuple, TypeVar
 
 T = TypeVar("T")
 
 
 def groupwise(iterable: Iterable[T], size: int) -> Iterator[Tuple[T, ...]]:
-    iters = tee(iterable, size)
+    iters = itertools.tee(iterable, size)
     for idx, x in enumerate(iters):
         for _ in range(idx):
             next(x, None)
@@ -87,7 +87,7 @@ def main() -> int:
     digits = [int(x) for x in string]
     answer = 0
     for operands in groupwise(digits, 13):
-        num = reduce(mul, operands, 1)
+        num = functools.reduce(operator.mul, operands, 1)
         answer = max(answer, num)
     return answer
 

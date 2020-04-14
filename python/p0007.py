@@ -36,7 +36,7 @@ What is the 10 001st prime number?
 """
 from typing import Callable, Collection, Optional, Set, cast
 
-from p0003 import cache, prime_factors, primes
+import p0003
 
 
 def is_prime(
@@ -50,9 +50,9 @@ def is_prime(
     exactly count prime factors."""
     if num in (0, 1):
         return False
-    factors = iter(prime_factors(num))
+    factors = iter(p0003.prime_factors(num))
     if count == 1:
-        if num in cache:  # always has 2
+        if num in p0003.cache:  # always has 2
             return True
         if num % 2 == 0:
             return False
@@ -71,7 +71,7 @@ def is_prime(
 
 
 def main() -> int:
-    for idx, num in enumerate(primes(), 1):
+    for idx, num in enumerate(p0003.primes(), 1):
         if idx == 10001:
             return num
     return -1

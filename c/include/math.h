@@ -1,51 +1,55 @@
 #ifndef EULER_MATH_H
 #define EULER_MATH_H
 
-#include "macros.h"
-
-#if !PCC_COMPILER
-    #include <stdlib.h>
+#ifdef DOXYGEN
+namespace c::include::math {
 #endif
 
+#include "./macros.h"
+
+#include <stdlib.h>
 #include <stdint.h>
 
-uintmax_t factorial(unsigned int n);
-inline uintmax_t factorial(unsigned int n)  {
+uintmax_t factorial(unsigned char n);
+inline uintmax_t factorial(unsigned char n) {
     // note that this function only works for numbers smaller than MAX_FACTORIAL_64
     if ((sizeof(uintmax_t) == 8 && n > MAX_FACTORIAL_64) || (sizeof(uintmax_t) == 16 && n > MAX_FACTORIAL_128))
         return -1;
     uintmax_t ret = 1;
-    for (unsigned int i = 2; i <= n; ++i) {
+    for (unsigned char i = 2; i <= n; ++i)  {
         ret *= i;
     }
     return ret;
 }
 
-uintmax_t n_choose_r(unsigned int n, unsigned int r)    {
-    // function returns -1 if it overflows
+uintmax_t n_choose_r(const unsigned int n, const unsigned int r)    {
+    // function returns -1 if it overflows, -2 if it can't allocate memory, or 0 if n < r
+    if (n < r)
+        return 0;
     if ((sizeof(uintmax_t) == 8 && n <= MAX_FACTORIAL_64) || (sizeof(uintmax_t) == 16 && n <= MAX_FACTORIAL_128))   {
         // fast path if small enough
         return factorial(n) / factorial(r) / factorial(n-r);
     }
     // slow path for larger numbers
-    int *factors;
-    uintmax_t answer, tmp;
-    unsigned int i, j;
-    factors = (int *) malloc(sizeof(int) * (n + 1));
+    #if CL_COMPILER
+        signed char *factors = (signed char *) malloc(sizeof(signed char) * (n + 1));
+        if (factors == NULL)
+            return -2;
+    #else
+        signed char factors[n+1];
+    #endif
     // collect factors of final number
-    for (i = 2; i <= n; i++) {
-        factors[i] = 1;
-    }
     // negative factor values indicate need to divide
-    for (i = 2; i <= r; i++) {
-        factors[i] -= 1;
-    }
-    for (i = 2; i <= n - r; i++) {
-        factors[i] -= 1;
-    }
-    // this loop reduces to prime factors only
-    for (i = n; i > 1; i--) {
-        for (j = 2; j < i; j++) {
+    // note that the highest absolute value in factors would be 127 if sizeof(uintmax_t) == 16
+    for (unsigned int i = r + 1; i <= n; i++)
+        factors[i] = 1;
+    for (unsigned int i = 2; i <= r; i++)
+        factors[i] = 0;  // we can set directly to 0 because r <= n, so they would cancel completely
+    for (unsigned int i = 2; i <= n - r; i++)
+        factors[i]--;  // we have to decrement because we don't know if (n - r) <= r
+    // this loop reduces to prime factors only, which helps cancel some
+    for (unsigned int i = n; i > 1; i--)    {
+        for (unsigned int j = 2; j < i; j++)    {
             if (i % j == 0) {
                 factors[j] += factors[i];
                 factors[i / j] += factors[i];
@@ -54,69 +58,44 @@ uintmax_t n_choose_r(unsigned int n, unsigned int r)    {
             }
         }
     }
-    i = j = 2;
-    answer = 1;
-    while (i <= n)  {
-        while (factors[i] > 0)  {
-            tmp = answer;
-            answer *= i;
-            while (answer < tmp && j <= n)  {
-                while (factors[j] < 0)  {
-                    tmp /= j;
-                    factors[j]++;
+    uintmax_t answer = 1;
+    unsigned int div_idx = 2;
+    for (unsigned int mul_idx = 2; mul_idx <= n; mul_idx++) {
+        while (factors[mul_idx] > 0)    {
+            uintmax_t prev = answer;  // store the previous value to check for overflow
+            answer *= mul_idx;
+            for (; answer < prev && div_idx <= n; div_idx++)    {
+                // if there was an overflow, and there are still divisor candidates, attempt to fix it
+                while (factors[div_idx] < 0)    {
+                    prev /= div_idx;
+                    factors[div_idx]++;
                 }
-                j++;
-                answer = tmp * i;
+                answer = prev * mul_idx;
             }
-            if (answer < tmp)   {
-                return -1;  // this indicates an overflow
+            if (answer < prev)  {
+                // if you couldn't fix it, return the overflow error code
+                #if CL_COMPILER
+                    free(factors);
+                #endif
+                return -1;
             }
-            factors[i]--;
+            factors[mul_idx]--;
         }
-        i++;
     }
-    while (j <= n)  {
-        while (factors[j] < 0)  {
-            answer /= j;
-            factors[j]++;
+    for (; div_idx <= n; div_idx++) {
+        while (factors[div_idx] < 0)  {
+            answer /= div_idx;
+            factors[div_idx]++;
         }
-        j++;
     }
-    free(factors);
+    #if CL_COMPILER
+        free(factors);
+    #endif
     return answer;
 }
 
-#if PCC_COMPILER
-    unsigned char imprecise_log10(uintmax_t x);
-    inline unsigned char imprecise_log10(uintmax_t x)  {
-        unsigned char answer = 0;
-        while (x)   {
-            x /= 10;
-            ++answer;
-        }
-        return answer;
-    }
-
-    double sqrt(double S);
-    inline double sqrt(double S)   {
-        // implements the Bakhshali method of square root computation to fix a PCC error
-        double a, x = S / 2;
-        unsigned int i;
-        for (i = 0; i < PCC_SQRT_ACCURACY; i++) {
-            a = (S - x*x) / (2 * x);
-            x = x + a - (a * a) / (2 * (x + a));
-        }
-        return x;
-    }
-
-    uintmax_t ceil(double x);
-    inline uintmax_t ceil(double x)   {
-        uintmax_t ret = (uintmax_t) x;
-        if (x == (double) ret)  {
-            return ret;
-        }
-        return ret + 1;
-    }
+#ifdef DOXYGEN
+};
 #endif
 
 #endif

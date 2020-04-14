@@ -3,13 +3,25 @@
 
 #include "iterator.h"
 
+#ifdef DOXYGEN
+namespace c::include::factors {
+#endif
+
+
 typedef struct factor_counter factor_counter;
+/**
+ * @implements c::include::iterator::Iterator
+ */
 struct factor_counter   {
     uintmax_t target;
     uintmax_t current;
-    IteratorTail(uintmax_t, factor_counter);
+    IteratorTail(uintmax_t, factor_counter)
 };
 
+/**
+ * @memberof factor_counter
+ * @private
+ */
 uintmax_t advance_factor_counter(factor_counter *fc);
 inline uintmax_t advance_factor_counter(factor_counter *fc) {
     IterationHead(fc);
@@ -23,15 +35,18 @@ inline uintmax_t advance_factor_counter(factor_counter *fc) {
     return 0;
 }
 
+/**
+ * @memberof factor_counter
+ */
 factor_counter proper_divisors(uintmax_t target);
 inline factor_counter proper_divisors(uintmax_t target) {
-    factor_counter ret;
-    IteratorInitHead(ret, advance_factor_counter);
-    ret.target = target;
-    ret.current = 0;
+    factor_counter ret = IteratorInitHead(advance_factor_counter, ExtendInit(target, target));
     return ret;
 }
 
+/**
+ * @memberof factor_counter
+ */
 uintmax_t proper_divisor_count(uintmax_t target);
 inline uintmax_t proper_divisor_count(uintmax_t target) {
     uintmax_t ret = 0;
@@ -42,5 +57,9 @@ inline uintmax_t proper_divisor_count(uintmax_t target) {
     }
     return ret;
 }
+
+#ifdef DOXYGEN
+};
+#endif
 
 #endif

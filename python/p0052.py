@@ -12,13 +12,13 @@ Revision 1:
 
 Changed to return a list instead of a set so it can be used in other problems
 """
-from itertools import count
-from math import log10
+import itertools
+import math
 from typing import List
 
 
 def digits(n: int) -> List[int]:
-    ret = [0] * (int(log10(n)) + 1)
+    ret = [0] * (int(math.log10(n)) + 1)
     idx = -1
     while n:
         n, digit = divmod(n, 10)
@@ -28,7 +28,7 @@ def digits(n: int) -> List[int]:
 
 
 def main():
-    for x in count(1):
+    for x in itertools.count(1):
         orig = set(digits(x))
         if all(set(digits(x * y)) == orig for y in range(2, 7)):
             return x

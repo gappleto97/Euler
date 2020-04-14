@@ -12,14 +12,14 @@ also prime.
 What is the largest n-digit pandigital prime that exists?
 """
 
-from p0003 import primes
-from p0074 import digits
+import p0003
+import p0074
 
 
 def main() -> int:
     answer = -1
-    for p in primes():
-        cur_digits = tuple(digits(p))
+    for p in p0003.primes():
+        cur_digits = tuple(p0074.digits(p))
         num_digits = len(cur_digits)
         if num_digits > 7:
             break

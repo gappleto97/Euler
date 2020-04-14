@@ -61,8 +61,6 @@ If this variable is defined, it should contain a comma-separated list of the com
 * clang
 * gcc
 * icc (Intel C Compiler)
-* pcc (Portable C Compiler)
-* tcc (Tiny C Compiler)
 
 If this variable is not defined, compilers will be auto-detected using `which()`.
 

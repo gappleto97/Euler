@@ -27,12 +27,12 @@ Find the product of the coefficients, a and b, for the quadratic expression
 that produces the maximum number of primes for consecutive values of n,
 starting with n=0.
 """
-from functools import partial
-from itertools import count, takewhile
+import functools
+import itertools
 from typing import Iterator
 
-from p0003 import primes
-from p0007 import is_prime
+import p0003
+import p0007
 
 
 def quadratic(n: int, a: int, b: int) -> int:
@@ -40,7 +40,7 @@ def quadratic(n: int, a: int, b: int) -> int:
 
 
 def primes_and_negatives(*args) -> Iterator[int]:
-    for p in primes(*args):
+    for p in p0003.primes(*args):
         yield p
         yield -p
 
@@ -49,8 +49,8 @@ def main() -> int:
     streak = answer = 0
     for a in range(-999, 1000):
         for b in primes_and_negatives(1001):
-            formula = partial(quadratic, a=a, b=b)
-            test = sum(1 for _ in takewhile(is_prime, map(formula, count())))
+            formula = functools.partial(quadratic, a=a, b=b)
+            test = sum(1 for _ in itertools.takewhile(p0007.is_prime, map(formula, itertools.count())))
             if test > streak:
                 streak = test
                 answer = a * b

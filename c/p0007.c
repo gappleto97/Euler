@@ -12,17 +12,25 @@ What is the 10 001st prime number?
 #include <stdio.h>
 #include "include/primes.h"
 
+#ifdef DOXYGEN
+namespace c::p0007 {
+#endif
+
 
 int main(int argc, char const *argv[])  {
-    unsigned int answer, count = 0;
+    unsigned long long answer, count = 0;
     prime_sieve ps = prime_sieve0();
     while (!ps.exhausted)   {
-        answer = next(ps);
+        answer = (unsigned long long) next(ps);
         if (++count == 10001)  {
-            printf("%u", answer);
+            printf("%llu", answer);
             break;
         }
     }
-    free_prime_sieve(ps);
+    free_iterator(ps);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

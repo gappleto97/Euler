@@ -21,13 +21,13 @@ The least value of n for which the remainder first exceeds 10**9 is 7037.
 
 Find the least value of n for which the remainder first exceeds 10**10.
 """
-from p0003 import primes
+import p0003
 
 
 def main() -> int:
     min_p = 235_000
     ten_ten = 10**10
-    for n, p in enumerate(primes(), 1):
+    for n, p in enumerate(p0003.primes(), 1):
         if p < min_p or n & 1 == 0:  # Seems to always produce remainder of 2?
             continue
         base = ((p-1)**n + (p+1)**n)

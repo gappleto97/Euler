@@ -15,6 +15,10 @@ Find the product abc.
 */
 #include <stdio.h>
 
+#ifdef DOXYGEN
+namespace c::p0009 {
+#endif
+
 
 int main(int argc, char const *argv[])  {
     unsigned long long answer = 0;
@@ -30,3 +34,7 @@ int main(int argc, char const *argv[])  {
     printf("%llu", answer);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

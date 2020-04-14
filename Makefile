@@ -1,5 +1,4 @@
 PY?=python3
-PROXY?=
 
 py%:
 	cd python && $(MAKE) $* $(MFLAGS)
@@ -12,3 +11,9 @@ js%:
 
 %:
 	$(MAKE) c$* js$* py$* $(MFLAGS)
+
+doxygen:
+	doxygen doxygen.cfg
+
+doxygen-server: doxygen
+	cd docs/html && $(PY) -m http.server -b localhost

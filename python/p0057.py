@@ -19,28 +19,28 @@ where the number of digits in the numerator exceeds the number of digits in the 
 
 In the first one-thousand expansions, how many fractions contain a numerator with more digits than denominator?
 """
-from fractions import Fraction
-from functools import lru_cache
+import fractions
+import functools
 
-from p0052 import digits
+import p0052
 
 
-@lru_cache()
-def root_two_denominator(n: int) -> Fraction:
+@functools.lru_cache()
+def root_two_denominator(n: int) -> fractions.Fraction:
     if n == 0:
-        return Fraction(2, 1)
-    return 2 + Fraction(1, root_two_denominator(n - 1))
+        return fractions.Fraction(2, 1)
+    return 2 + fractions.Fraction(1, root_two_denominator(n - 1))
 
 
-def root_two_expansion(n: int) -> Fraction:
-    return 1 + Fraction(1, root_two_denominator(n))
+def root_two_expansion(n: int) -> fractions.Fraction:
+    return 1 + fractions.Fraction(1, root_two_denominator(n))
 
 
 def main() -> int:
     answer = 0
     for x in range(1_000):
         frac = root_two_expansion(x)
-        if len(digits(frac.numerator)) > len(digits(frac.denominator)):
+        if len(p0052.digits(frac.numerator)) > len(p0052.digits(frac.denominator)):
             answer += 1
     return answer
 

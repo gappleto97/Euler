@@ -21,37 +21,33 @@ and 110; therefore d(220) = 284. The proper divisors of 284 are 1, 2, 4, 71 and
 
 Evaluate the sum of all the amicable numbers under 10000.
 """
-from functools import reduce
-from itertools import combinations, filterfalse
-from operator import mul
+import functools
+import itertools
+import operator
 from typing import Iterator, Set
 
-from p0003 import prime_factors
+import p0003
 
 
 def proper_divisors(num: int) -> Iterator[int]:
-    factors = tuple(prime_factors(num))
+    factors = tuple(p0003.prime_factors(num))
     seen: Set[int] = set()
     yield 1
     for x in range(1, len(factors)):
-        for combo in combinations(factors, x):
-            ret = reduce(mul, combo, 1)
+        for combo in itertools.combinations(factors, x):
+            ret = functools.reduce(operator.mul, combo, 1)
             if ret not in seen:
                 yield ret
                 seen.add(ret)
         seen.clear()
 
 
-def d(n: int) -> int:
-    return sum(proper_divisors(n))
-
-
 def main() -> int:
     ret = 0
     skip: Set[int] = set()
-    for a in filterfalse(skip.__contains__, range(10000)):
-        b = d(a)
-        if a != b and d(b) == a:
+    for a in itertools.filterfalse(skip.__contains__, range(10000)):
+        b = sum(proper_divisors(a))
+        if a != b and sum(proper_divisors(b)) == a:
             ret += a + b
             skip.add(b)
     return ret

@@ -14,7 +14,7 @@ base 10 and base 2.
 leading zeros.)
 
 """
-from p0004 import is_palindrome
+import p0004
 
 
 def bin_repr(x: int) -> str:
@@ -24,7 +24,7 @@ def bin_repr(x: int) -> str:
 def main() -> int:
     answer = 0
     for x in range(1, 1000000):
-        if is_palindrome(x) and is_palindrome(x, rep_func=bin_repr):
+        if p0004.is_palindrome(x) and p0004.is_palindrome(x, rep_func=bin_repr):
             answer += x
     return answer
 

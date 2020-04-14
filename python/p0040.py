@@ -13,24 +13,24 @@ If dn represents the nth digit of the fractional part, find the value of the fol
 
 d1 × d10 × d100 × d1000 × d10000 × d100000 × d1000000
 """
-from functools import reduce
-from itertools import count
-from math import log10
-from operator import mul
+import functools
+import itertools
+import math
+import operator
 
 
 def main():
     digits_seen = 1
     interests = {1, 10, 100, 1_000, 10_000, 100_000, 1_000_000}
     queries = []
-    for x in count(1):
-        digits = int(log10(x)) + 1
+    for x in itertools.count(1):
+        digits = int(math.log10(x)) + 1
         for idx in range(digits):
             if digits_seen + idx in interests:
                 queries.append(int(str(x)[idx]))
                 if len(queries) == len(interests):
                     print(queries)
-                    return reduce(mul, queries, 1)
+                    return functools.reduce(operator.mul, queries, 1)
         digits_seen += digits
 
 

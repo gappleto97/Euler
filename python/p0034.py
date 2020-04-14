@@ -14,13 +14,13 @@ their digits.
 
 Note: as 1! = 1 and 2! = 2 are not sums they are not included.
 """
-from math import factorial
+import math
 
 
 def main() -> int:
     answer = 0
     for x in range(10, 100000):
-        if sum(factorial(int(y)) for y in repr(x)) == x:
+        if sum(math.factorial(int(y)) for y in repr(x)) == x:
             answer += x
     return answer
 

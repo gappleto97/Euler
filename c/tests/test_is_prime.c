@@ -2,6 +2,10 @@
 #include <inttypes.h>
 #include "../include/primes.h"
 
+#ifdef DOXYGEN
+namespace c::tests::test_is_prime {
+#endif
+
 #ifndef MAX_PRIME
 #define MAX_PRIME 1000
 #endif
@@ -15,9 +19,16 @@ int main(int argc, char const *argv[]) {
         for (i = prev + 1; i < p; i++)  {
             printf("%" PRIuMAX " %d %" PRIuMAX " -1\n", i, is_prime(i), is_composite(i));
         }
+        if (p == 29)
+            printf("\n");
         printf("%" PRIuMAX " %d %" PRIuMAX " %" PRIuMAX "\n", p, is_prime(p), is_composite(p), (uintmax_t) pc.idx - 1);
         prev = p;
         p = next(pc);
     }
+    free_iterator(pc);
     return 0;
 }
+
+#ifdef DOXYGEN
+}
+#endif

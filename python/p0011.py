@@ -34,12 +34,12 @@ The product of these numbers is 26 × 63 × 78 × 14 = 1788696.
 What is the greatest product of four adjacent numbers in the same direction (up, down, left, right, or diagonally) in
 the 20×20 grid?
 """
-from functools import reduce
-from itertools import chain
-from operator import mul
+import functools
+import itertools
+import operator
 from typing import Iterable, List, Tuple, cast
 
-from p0008 import groupwise
+import p0008
 
 
 def text_to_grid(text: str) -> List[List[int]]:
@@ -48,7 +48,7 @@ def text_to_grid(text: str) -> List[List[int]]:
 
 def rows_by_4(grid: List[List[int]]) -> Iterable[Tuple[int, int, int, int]]:
     for row in grid:
-        yield from cast(Iterable[Tuple[int, int, int, int]], groupwise(row, 4))
+        yield from cast(Iterable[Tuple[int, int, int, int]], p0008.groupwise(row, 4))
 
 
 def cols_by_4(grid: List[List[int]]) -> Iterable[Tuple[int, int, int, int]]:
@@ -102,8 +102,8 @@ def main() -> int:
     )
     grid = text_to_grid(text)
     answer = 0
-    for group in chain(rows_by_4(grid), cols_by_4(grid), down_diags_by_4(grid), up_diags_by_4(grid)):
-        product = reduce(mul, group, 1)
+    for group in itertools.chain(rows_by_4(grid), cols_by_4(grid), down_diags_by_4(grid), up_diags_by_4(grid)):
+        product = functools.reduce(operator.mul, group, 1)
         if product > answer:
             print("New group!", group, product)
             answer = product

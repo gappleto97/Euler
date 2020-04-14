@@ -13,17 +13,17 @@ to 10 without any remainder.
 What is the smallest positive number that is evenly divisible by all of the
 numbers from 1 to 20?
 """
-from functools import reduce
-from itertools import combinations
-from operator import mul
+import functools
+import itertools
+import operator
 
 
 def main() -> int:
     group = range(1, 21)
     answer = 1_000_000_000_000
     for x in group:
-        for multiples in combinations(group, x):
-            num = reduce(mul, multiples, 1)
+        for multiples in itertools.combinations(group, x):
+            num = functools.reduce(operator.mul, multiples, 1)
             if num < answer and all(num % divisor == 0 for divisor in group):
                 answer = num
     return answer
