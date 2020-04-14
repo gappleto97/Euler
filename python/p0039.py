@@ -12,7 +12,7 @@ For which value of p ≤ 1000, is the number of solutions maximised?
 """
 
 
-def main():
+def main() -> int:
     biggest = 0
     biggest_size = 0
     for p in range(3, 1000):

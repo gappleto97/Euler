@@ -14,19 +14,19 @@ Find the next triangle number that is also pentagonal and hexagonal.
 """
 
 
-def T(n):
+def T(n: int) -> int:
     return n * (n + 1) // 2
 
 
-def P(n):
+def P(n: int) -> int:
     return n * (3 * n - 1) // 2
 
 
-def H(n):
+def H(n: int) -> int:
     return n * (2 * n - 1)
 
 
-def main():
+def main() -> int:
     T_idx = 286
     P_idx = 166
     H_idx = 144

@@ -22,7 +22,7 @@ and 2 ≤ b ≤ 100?
 """
 
 
-def main():
+def main() -> int:
     space = range(2, 101)
     return len(set(a**b for a in space for b in space))
 

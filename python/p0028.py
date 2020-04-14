@@ -49,7 +49,12 @@ from typing import Tuple
 
 def spiral_corners(i: int) -> Tuple[int, int, int, int]:
     r = range((2 * i - 1)**2 + 1, (2 * i + 1)**2 + 1)
-    return tuple(r[x * 2 * i - 1] for x in (1, 2, 3, 4))
+    return (
+        r[1 * 2 * i - 1],
+        r[2 * 2 * i - 1],
+        r[3 * 2 * i - 1],
+        r[4 * 2 * i - 1]
+    )
 
 
 def square_corner_sum(i: int) -> int:
