@@ -26,6 +26,10 @@ i = 3
 the corners are:
 perimeter[i][x * 2i - 1 for x in (1, 2, 3, 4)]
 
+Revision 1:
+
+Extracted the code that finds the corners
+
 Problem:
 
 Starting with the number 1 and moving to the right in a clockwise direction a 5 by 5 spiral is formed as follows:
@@ -40,14 +44,19 @@ It can be verified that the sum of the numbers on the diagonals is 101.
 
 What is the sum of the numbers on the diagonals in a 1001 by 1001 spiral formed in the same way?
 """
+from typing import Tuple
+
+
+def spiral_corners(i: int) -> Tuple[int, int, int, int]:
+    r = range((2 * i - 1)**2 + 1, (2 * i + 1)**2 + 1)
+    return tuple(r[x * 2 * i - 1] for x in (1, 2, 3, 4))
 
 
 def square_corner_sum(i: int) -> int:
     """Given the index of some spiral, return the sum of its corners"""
     if i == 0:
         return 1
-    r = range((2 * i - 1)**2 + 1, (2 * i + 1)**2 + 1)
-    return sum(r[x * 2 * i - 1] for x in (1, 2, 3, 4))
+    return sum(spiral_corners(i))
 
 
 def spiral_diagonal_sum(size: int) -> int:
