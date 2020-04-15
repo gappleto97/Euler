@@ -18,7 +18,7 @@ inline intmax_t nz_rand()   {
 
 unsigned long long perf_time();
 inline unsigned long long perf_time()   {
-    #if (CL_COMPILER || defined(__MINGW32__))
+    #if (CL_COMPILER || defined(__MINGW32__) || defined(_WIN32) || defined(WIN32))
         LARGE_INTEGER t;
         QueryPerformanceCounter(&t);  // returns microseconds
         return t.QuadPart * 1000;
