@@ -9,6 +9,7 @@ result will always be prime. For example, taking 7 and 109, both 7109 and 1097 a
 
 Find the lowest sum for a set of five primes for which any two primes concatenate to produce another prime.
 """
+from collections import defaultdict
 from itertools import combinations
 from typing import DefaultDict, List, Set
 
@@ -33,7 +34,7 @@ def main() -> int:
     # 2 is excluded because higher even numbers can't be prime
     cached_primes.remove(5)
     # 5 is excluded because if a number ends with 5, it's divisible by 5
-    compat: DefaultDict[int, Set[int]] = DefaultDict(set)
+    compat: DefaultDict[int, Set[int]] = defaultdict(set)
     for x in iterator:
         for y in cached_primes:
             if is_concat_prime(x, y):
