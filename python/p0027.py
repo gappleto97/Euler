@@ -29,7 +29,7 @@ starting with n=0.
 """
 import functools
 import itertools
-from typing import Iterator
+from typing import Iterator, Optional
 
 import p0003
 import p0007
@@ -39,8 +39,8 @@ def quadratic(n: int, a: int, b: int) -> int:
     return (n + a) * n + b
 
 
-def primes_and_negatives(*args) -> Iterator[int]:
-    for p in p0003.primes(*args):
+def primes_and_negatives(stop: Optional[int] = None) -> Iterator[int]:
+    for p in p0003.primes(stop):
         yield p
         yield -p
 

@@ -34,7 +34,7 @@ the 6th prime is 13.
 
 What is the 10 001st prime number?
 """
-from typing import Callable, Collection, Optional, cast
+from typing import Callable, Collection, Optional
 
 import p0003
 

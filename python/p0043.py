@@ -30,7 +30,7 @@ import p0008
 import p0055
 
 
-def main():
+def main() -> int:
     answer = 0
     divisibility = (3, 5, 7, 11, 13, 17)
     for d in itertools.permutations(range(10), 10):

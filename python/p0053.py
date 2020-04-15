@@ -27,7 +27,7 @@ for 1≤n≤100, are greater than one-million?
 import p0015
 
 
-def main():
+def main() -> int:
     answer = 0
     for n in range(101):
         for r in range(2, n-1):

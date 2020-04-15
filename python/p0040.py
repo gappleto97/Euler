@@ -32,6 +32,7 @@ def main() -> int:
                     print(queries)
                     return functools.reduce(operator.mul, queries, 1)
         digits_seen += digits
+    return -1
 
 
 if __name__ == '__main__':

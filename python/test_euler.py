@@ -1,3 +1,4 @@
+# type: ignore
 import gc
 import os
 import pathlib
@@ -98,17 +99,17 @@ IN_TERMUX = bool(shutil.which('termux-setup-storage'))
 
 _raw_NO_SLOW = os.environ.get('NO_SLOW')
 try:
-    _parsed_NO_SLOW: Union[str, int, None] = int(_raw_NO_SLOW)  # type: ignore
+    _parsed_NO_SLOW: Union[str, int, None] = int(_raw_NO_SLOW)
 except Exception:
     _parsed_NO_SLOW = _raw_NO_SLOW
 _raw_ONLY_SLOW = os.environ.get('ONLY_SLOW')
 try:
-    _parsed_ONLY_SLOW: Union[str, int, None] = int(_raw_ONLY_SLOW)  # type: ignore
+    _parsed_ONLY_SLOW: Union[str, int, None] = int(_raw_ONLY_SLOW)
 except Exception:
     _parsed_ONLY_SLOW = _raw_ONLY_SLOW
 _raw_NO_OPTIONAL_TESTS = os.environ.get('NO_OPTIONAL_TESTS')
 try:
-    _parsed_NO_OPTIONAL_TESTS: Union[str, int, None] = int(_raw_NO_OPTIONAL_TESTS)  # type: ignore
+    _parsed_NO_OPTIONAL_TESTS: Union[str, int, None] = int(_raw_NO_OPTIONAL_TESTS)
 except Exception:
     _parsed_NO_OPTIONAL_TESTS = _raw_NO_OPTIONAL_TESTS
 
@@ -122,7 +123,7 @@ NO_OPTIONAL_TESTS = (_parsed_NO_OPTIONAL_TESTS is None and ONLY_SLOW) or _parsed
 
 
 @pytest.fixture(params=("{:0>3}".format(x) for x in sorted(answers.keys())))  # to make sure the benchmarks are sorted
-def key(request):  # type: ignore
+def key(request):
     return int(request.param)  # reduce processing burden on test
 
 
@@ -162,7 +163,7 @@ def test_is_prime(benchmark: Any) -> None:
 def test_problem(benchmark: Any, key: int) -> None:
     if (NO_SLOW and key in known_slow) or (ONLY_SLOW and key not in known_slow):
         pytest.skip()
-    test_func: Callable[[], int] = __import__("p{:0>4}".format(key)).main  # type: ignore
+    test_func: Callable[[], int] = __import__("p{:0>4}".format(key)).main
     if key in known_slow:
         answer = benchmark.pedantic(test_func, iterations=1, rounds=1)
     else:
