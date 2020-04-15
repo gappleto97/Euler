@@ -19,7 +19,7 @@ natural numbers and the square of the sum.
 """
 
 
-def main():
+def main() -> int:
     group = range(1, 101)
     sum_of_squares = sum(x**2 for x in group)
     square_of_sum = sum(group)**2

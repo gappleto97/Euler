@@ -18,15 +18,15 @@ How many such routes are there through a 20×20 grid?
 import math
 
 
-def n_choose_r(n, r):
+def n_choose_r(n: int, r: int) -> int:
     return math.factorial(n) // math.factorial(r) // math.factorial(n - r)
 
 
-def lattice_paths(height: int, width: int):
+def lattice_paths(height: int, width: int) -> int:
     return n_choose_r(height + width, height)
 
 
-def main():
+def main() -> int:
     return lattice_paths(20, 20)
 
 

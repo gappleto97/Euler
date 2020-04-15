@@ -95,7 +95,7 @@ def modified_eratosthenes() -> Iterator[int]:
         sieve[candidate] = step
 
 
-def prime_factors(num) -> Iterator[int]:
+def prime_factors(num: int) -> Iterator[int]:
     if num < 0:
         yield -1
         num = -num

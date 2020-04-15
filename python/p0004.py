@@ -21,13 +21,13 @@ import itertools
 from typing import Callable
 
 
-def is_palindrome(n, rep_func: Callable[[int], str] = repr):
+def is_palindrome(n: int, rep_func: Callable[[int], str] = repr) -> bool:
     """Checks if the string representation of an object is a palindrome"""
     r = rep_func(n)
     return r == r[::-1]
 
 
-def main():
+def main() -> int:
     result = 0
     for x, y in itertools.combinations(range(100, 1000), 2):
         num = x * y

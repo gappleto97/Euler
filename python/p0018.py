@@ -53,7 +53,7 @@ def reduce_triangle(triangle: Sequence[Sequence[int]]) -> int:
     return potential_totals[0]
 
 
-def main():
+def main() -> int:
     rows = (
         (75, ),
         (95, 64),

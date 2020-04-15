@@ -27,11 +27,12 @@ def digits(n: int) -> List[int]:
     return ret
 
 
-def main():
+def main() -> int:
     for x in itertools.count(1):
         orig = set(digits(x))
         if all(set(digits(x * y)) == orig for y in range(2, 7)):
             return x
+    return -1
 
 
 if __name__ == '__main__':
