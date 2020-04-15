@@ -32,11 +32,11 @@ def parse_roman(roman: str) -> int:
     values = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
     corrections = {
         "IV": 2,  # initially parsed as 6, but should be 4, so subtract 2
-        "IX": 2,  # initially parsed as 6, but should be 4, so subtract 2
+        "IX": 2,  # initially parsed as 11, but should be 9, so subtract 2
         "XL": 20,  # initially parsed as 60, but should be 40, so subtract 20
-        "XC": 20,  # initially parsed as 60, but should be 40, so subtract 20
+        "XC": 20,  # initially parsed as 110, but should be 90, so subtract 20
         "CD": 200,  # initially parsed as 600, but should be 400, so subtract 200
-        "CM": 200  # initially parsed as 600, but should be 400, so subtract 200
+        "CM": 200  # initially parsed as 1100, but should be 900, so subtract 200
     }
     number = sum(values[ch] for ch in roman)
     number -= sum(val for key, val in corrections.items() if key in roman)
