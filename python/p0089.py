@@ -45,15 +45,15 @@ def parse_roman(roman: str) -> int:
 
 def make_roman(i: int) -> str:
     ret = ""
-    values = {
-        1000: "M", 900: "CM",
-        500: "D", 400: "CD",
-        100: "C", 90: "XC",
-        50: "L", 40: "XL",
-        10: "X", 9: "IX",
-        5: "V", 4: "IV"
-    }
-    for threshhold, string in sorted(values.items(), reverse=True):
+    values = (
+        (1000, "M"), (900, "CM"),
+        (500, "D"), (400, "CD"),
+        (100, "C"), (90, "XC"),
+        (50, "L"), (40, "XL"),
+        (10, "X"), (9, "IX"),
+        (5, "V"), (4, "IV")
+    )
+    for threshhold, string in values:
         while i >= threshhold:
             ret += string
             i -= threshhold
