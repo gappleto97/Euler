@@ -34,7 +34,7 @@ the 6th prime is 13.
 
 What is the 10 001st prime number?
 """
-from typing import Callable, Collection, Optional, Set, cast
+from typing import Callable, Collection, Optional, cast
 
 import p0003
 
@@ -61,7 +61,7 @@ def is_prime(
     seen_add: Callable[[Optional[int]], None]
     if distinct:
         seen = set()
-        seen_add = cast(Set[Optional[int]], seen).add
+        seen_add = seen.add
     else:
         seen = []
         seen_add = seen.append

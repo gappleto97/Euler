@@ -11,7 +11,7 @@ Considering natural numbers of the form, ab, where a, b < 100, what is the maxim
 import p0074
 
 
-def main():
+def main() -> int:
     answer = 0
     for x in range(2, 100):
         for y in range(1, 100):

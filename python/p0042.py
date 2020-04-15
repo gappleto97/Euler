@@ -34,7 +34,7 @@ def is_in_triangle(n: int) -> bool:
     return n in Cache.cache
 
 
-def main():
+def main() -> int:
     answer = 0
     with pathlib.Path(__file__).parent.parent.joinpath('_data', 'p0042_words.txt').open('rb') as f:
         words = f.read().replace(b'"', b'').split(b',')

@@ -25,7 +25,7 @@ Find ∑ S for every pair of consecutive primes with 5 ≤ p1 ≤ 1000000.
 import p0003
 
 
-def mul_inv(a: int, b: int):
+def mul_inv(a: int, b: int) -> int:
     """Multiplicative inverse for modulo numbers"""
     if b == 1:
         return 1

@@ -50,7 +50,7 @@ def steps_to_palindrome(n: int, depth: int = 0) -> int:
     return steps_to_palindrome(new, depth=depth + 1)
 
 
-def main():
+def main() -> int:
     answer = 0
     for x in range(1, 10_000):
         if not steps_to_palindrome(x):

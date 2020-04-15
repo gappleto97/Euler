@@ -29,7 +29,7 @@ import pathlib
 import p0018
 
 
-def main():
+def main() -> int:
     rows = []
     with pathlib.Path(__file__).parent.parent.joinpath("_data", "p0067_triangle.txt").open("r") as f:
         for line in f.readlines():
