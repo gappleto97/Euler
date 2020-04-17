@@ -50,12 +50,12 @@ matrix:
       env: pyver=3.7 pydist=macpython NO_SLOW=true
 #          pydist=macports
 #          pydist=homebrew
-    - language: generic
-      python: 3.8
-      os: osx
-      env: pyver=3.8 pydist=macpython NO_SLOW=true
-#          pydist=macports
-#          pydist=homebrew
+#     - language: generic
+#       python: 3.8
+#       os: osx
+#       env: pyver=3.8 pydist=macpython NO_SLOW=true
+# #          pydist=macports
+# #          pydist=homebrew
     - language: generic
       python: pypy3
       os: osx
