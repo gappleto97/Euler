@@ -92,9 +92,10 @@ answers = {
     145: 608720,
     187: 17427258,
     206: 1389019170,
+    357: 1739023853137,
 }
 
-known_slow = {73, 76, 118, 145}
+known_slow = {73, 76, 118, 145, 357}
 # this is the set of problems where I have the right answer but wrong solution
 
 IN_TERMUX = bool(shutil.which('termux-setup-storage'))
