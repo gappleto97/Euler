@@ -19,11 +19,11 @@ without negating its benefit, or figure out a more general solution to the filte
 Filtering to evens also shaves off some more, and n=4k+2 goes even further, about 45%.
 This cuts it overall from ~20 minutes to ~5 minutes.
 """
+# import sys
 from math import sqrt
-import sys
 from typing import Iterable
 
-from p0003 import primes, prime_factors
+from p0003 import prime_factors, primes
 from p0007 import is_prime
 
 
@@ -57,8 +57,8 @@ def main() -> int:
                 break
         else:  # read as: if you didn't break
             answer += n
-            print(f'{n:,}', answer)
-            sys.stdout.flush()
+            # print(f'{n:,}', answer)
+            # sys.stdout.flush()
     return answer
 
 
