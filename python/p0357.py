@@ -40,13 +40,11 @@ def divisors(n: int) -> Iterable[int]:
 
 def main() -> int:
     answer = 1 + 2  # don't bother trying 1, 2, they're correct
-    iterator = primes()
-    curr_prime = next(iterator)
+    for _ in primes(100010000):
+        pass  # initialize the prime cache up to max + sqrt(max). It seems silly, but it goes much faster
     prime_squares = {p * p for p in primes(10001)}
     for n in range(6, 100000000, 4):
         # n can't be odd (unless 1) because then n + n/d is even, and can't be a multiple of 4 as shown below
-        while n > curr_prime:
-            curr_prime = next(iterator)  # keep the prime cache happy
         for d in divisors(n):
             if d in prime_squares:
                 break
