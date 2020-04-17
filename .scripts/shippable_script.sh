@@ -5,7 +5,7 @@ if [ $pyver ]; then
     else
         export PY_EXE=python
         if [ $py36 ]; then
-            sudo add-apt-repository -y ppa:jonathonf/python-3.6
+            sudo add-apt-repository -y ppa:deadsnakes/ppa
             sudo apt-get update --fix-missing
             sudo apt-get install python3.6
             virtualenv -p python3.6 venv
