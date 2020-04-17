@@ -38,10 +38,10 @@ def main() -> int:
     for x in iterator:
         for y in cached_primes:
             if is_concat_prime(x, y):
-                for triplet in combinations(compat[y], 3):
-                    if all(a in compat[b] for a, b in combinations(triplet, 2)):
-                        if all(is_concat_prime(x, a) for a in triplet):
-                            return x + y + sum(triplet)
+                for a, b, c in combinations(compat[y], 3):
+                    if a in compat[b] and a in compat[c] and b in compat[c]:  # remember these are commutative
+                        if is_concat_prime(a, x) and is_concat_prime(b, x) and is_concat_prime(c, x):
+                            return x + y + a + b + c
                 compat[x].add(y)
                 compat[y].add(x)
         cached_primes.append(x)
