@@ -23,12 +23,12 @@ elif [ $jsver ]; then
         make jstest
     fi
 else
+    sudo apt-key adv --refresh-keys --keyserver ha.pool.sks-keyservers.net
     sudo apt-get update
     if [ $icc ]; then
         mkdir iccdir
         wget -O - -o /dev/null https://registrationcenter-download.intel.com/akdlm/irc_nas/15873/intel-sw-tools-installer.tar.gz | tar -xz --no-seek -C iccdir  --strip-components=1
         cd iccdir
-        sudo apt-key adv --refresh-keys
         sudo apt-get install -y cpio
         sed -i -e "s/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g" silent.cfg
         sed -i -e "s/ACTIVATION_TYPE=no_license/ACTIVATION_TYPE=serial_number/g" silent.cfg
