@@ -19,8 +19,6 @@ without negating its benefit, or figure out a more general solution to the filte
 Filtering to evens also shaves off some more, and n=4k+2 goes even further, about 45%.
 This cuts it overall from ~20 minutes to ~5 minutes.
 """
-# import sys
-from math import sqrt
 from typing import Iterable
 
 from p0003 import prime_factors, primes
@@ -31,12 +29,12 @@ def divisors(n: int) -> Iterable[int]:
     yield 1
     divs = {1}
     for fact in prime_factors(n):
-        temp = set()
+        temp = []
         for div in divs:
             d = fact * div
             if d not in divs:
                 yield d
-                temp.add(fact * div)
+                temp.append(fact * div)
         divs.update(temp)
 
 
@@ -44,8 +42,9 @@ def main() -> int:
     answer = 1 + 2  # don't bother trying 1, 2, they're correct
     iterator = primes()
     curr_prime = next(iterator)
-    prime_squares = {p * p for p in primes(int(sqrt(100000000)) + 1)}
-    for n in range(6, 100000000, 4):  # I have no idea why, but it needs to be in the form 4k+2
+    prime_squares = {p * p for p in primes(10001)}
+    for n in range(6, 100000000, 4):
+        # n can't be odd (unless 1) because then n + n/d is even, and can't be a multiple of 4 as shown below
         while n > curr_prime:
             curr_prime = next(iterator)  # keep the prime cache happy
         for d in divisors(n):
@@ -57,8 +56,6 @@ def main() -> int:
                 break
         else:  # read as: if you didn't break
             answer += n
-            # print(f'{n:,}', answer)
-            # sys.stdout.flush()
     return answer
 
 
